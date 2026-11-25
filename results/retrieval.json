@@ -1,0 +1,609 @@
+{
+  "config": {
+    "tau": 0.8,
+    "lam": 2.0,
+    "alpha": 0.5,
+    "theta": 0.55,
+    "max_alts": 3,
+    "bm25_k1": 0.9,
+    "bm25_b": 0.4,
+    "use_alt_index": true,
+    "use_phonetic": true,
+    "confidence_gate": true
+  },
+  "model": "small.en",
+  "conditions": {
+    "clean": {
+      "n_docs": 1896,
+      "n_queries": 4021,
+      "asr": {
+        "wer": 0.0415,
+        "ne_wer": 0.1096,
+        "non_ne_wer": 0.0276,
+        "ne_token_share": 0.1699,
+        "mean_conf_correct": 0.9547,
+        "mean_conf_error": 0.7566,
+        "conf_auc": 0.8478,
+        "pct_words_lowconf": 0.0912,
+        "alt_coverage_lowconf": 0.1981,
+        "alt_postings_per_doc": 2.93,
+        "sub_errors": 8896,
+        "sub_flagged_lowconf": 0.4693,
+        "sub_recovered_by_alt": 0.3516,
+        "sub_phonetically_reachable": 0.5093
+      },
+      "systems": {
+        "oracle_bm25": {
+          "recall@1": 0.7394,
+          "recall@5": 0.8985,
+          "recall@10": 0.9281,
+          "mrr": 0.8081,
+          "ndcg@10": 0.8376,
+          "mrr_ci": [
+            0.7977,
+            0.8181
+          ],
+          "ms_per_query": 0.06,
+          "p_vs_bm25_1best": 0.0
+        },
+        "bm25_1best": {
+          "recall@1": 0.7197,
+          "recall@5": 0.8814,
+          "recall@10": 0.9142,
+          "mrr": 0.7892,
+          "ndcg@10": 0.8198,
+          "mrr_ci": [
+            0.7781,
+            0.8
+          ],
+          "ms_per_query": 0.07
+        },
+        "nbest_uniform": {
+          "recall@1": 0.7277,
+          "recall@5": 0.8863,
+          "recall@10": 0.9184,
+          "mrr": 0.7961,
+          "ndcg@10": 0.826,
+          "mrr_ci": [
+            0.7855,
+            0.8062
+          ],
+          "ms_per_query": 0.07,
+          "p_vs_bm25_1best": 0.0
+        },
+        "cart": {
+          "recall@1": 0.7262,
+          "recall@5": 0.8876,
+          "recall@10": 0.9199,
+          "mrr": 0.796,
+          "ndcg@10": 0.8263,
+          "mrr_ci": [
+            0.7852,
+            0.8062
+          ],
+          "ms_per_query": 41.6,
+          "p_vs_bm25_1best": 0.0
+        },
+        "dense_1best": {
+          "recall@1": 0.5944,
+          "recall@5": 0.8341,
+          "recall@10": 0.8993,
+          "mrr": 0.6984,
+          "ndcg@10": 0.7471,
+          "mrr_ci": [
+            0.687,
+            0.7108
+          ],
+          "ms_per_query": 3.95,
+          "p_vs_bm25_1best": 0.0
+        }
+      },
+      "ne_queries": {
+        "n": 2400,
+        "mrr": {
+          "oracle_bm25": {
+            "mrr": 0.8549
+          },
+          "bm25_1best": {
+            "mrr": 0.829
+          },
+          "nbest_uniform": {
+            "mrr": 0.8368
+          },
+          "cart": {
+            "mrr": 0.8379
+          },
+          "dense_1best": {
+            "mrr": 0.7274
+          }
+        }
+      },
+      "non_ne_queries": {
+        "n": 1621,
+        "mrr": {
+          "oracle_bm25": {
+            "mrr": 0.7389
+          },
+          "bm25_1best": {
+            "mrr": 0.7303
+          },
+          "nbest_uniform": {
+            "mrr": 0.7358
+          },
+          "cart": {
+            "mrr": 0.7339
+          },
+          "dense_1best": {
+            "mrr": 0.6554
+          }
+        }
+      },
+      "index_cost": {
+        "oracle_bm25": {
+          "vocab": 24269,
+          "postings": 151275,
+          "phonetic_terms": 0
+        },
+        "bm25_1best": {
+          "vocab": 22588,
+          "postings": 153972,
+          "phonetic_terms": 0
+        },
+        "nbest_uniform": {
+          "vocab": 26284,
+          "postings": 160284,
+          "phonetic_terms": 0
+        },
+        "cart": {
+          "vocab": 25056,
+          "postings": 157923,
+          "phonetic_terms": 10568
+        }
+      }
+    },
+    "snr5": {
+      "n_docs": 1896,
+      "n_queries": 4021,
+      "asr": {
+        "wer": 0.0574,
+        "ne_wer": 0.143,
+        "non_ne_wer": 0.0398,
+        "ne_token_share": 0.1699,
+        "mean_conf_correct": 0.9441,
+        "mean_conf_error": 0.7452,
+        "conf_auc": 0.8306,
+        "pct_words_lowconf": 0.1143,
+        "alt_coverage_lowconf": 0.2142,
+        "alt_postings_per_doc": 4.08,
+        "sub_errors": 11860,
+        "sub_flagged_lowconf": 0.5357,
+        "sub_recovered_by_alt": 0.2867,
+        "sub_phonetically_reachable": 0.4962
+      },
+      "systems": {
+        "oracle_bm25": {
+          "recall@1": 0.7394,
+          "recall@5": 0.8985,
+          "recall@10": 0.9281,
+          "mrr": 0.8081,
+          "ndcg@10": 0.8376,
+          "mrr_ci": [
+            0.7977,
+            0.8181
+          ],
+          "ms_per_query": 0.06,
+          "p_vs_bm25_1best": 0.0
+        },
+        "bm25_1best": {
+          "recall@1": 0.7048,
+          "recall@5": 0.8717,
+          "recall@10": 0.9048,
+          "mrr": 0.776,
+          "ndcg@10": 0.8075,
+          "mrr_ci": [
+            0.7648,
+            0.7867
+          ],
+          "ms_per_query": 0.06
+        },
+        "nbest_uniform": {
+          "recall@1": 0.7202,
+          "recall@5": 0.8811,
+          "recall@10": 0.9135,
+          "mrr": 0.7891,
+          "ndcg@10": 0.8195,
+          "mrr_ci": [
+            0.7782,
+            0.7995
+          ],
+          "ms_per_query": 0.07,
+          "p_vs_bm25_1best": 0.0
+        },
+        "cart": {
+          "recall@1": 0.7157,
+          "recall@5": 0.8841,
+          "recall@10": 0.9162,
+          "mrr": 0.7883,
+          "ndcg@10": 0.8196,
+          "mrr_ci": [
+            0.7772,
+            0.7984
+          ],
+          "ms_per_query": 42.96,
+          "p_vs_bm25_1best": 0.0
+        },
+        "dense_1best": {
+          "recall@1": 0.5906,
+          "recall@5": 0.8279,
+          "recall@10": 0.9,
+          "mrr": 0.6955,
+          "ndcg@10": 0.745,
+          "mrr_ci": [
+            0.6837,
+            0.7081
+          ],
+          "ms_per_query": 3.95,
+          "p_vs_bm25_1best": 0.0
+        }
+      },
+      "ne_queries": {
+        "n": 2400,
+        "mrr": {
+          "oracle_bm25": {
+            "mrr": 0.8549
+          },
+          "bm25_1best": {
+            "mrr": 0.8131
+          },
+          "nbest_uniform": {
+            "mrr": 0.8276
+          },
+          "cart": {
+            "mrr": 0.8275
+          },
+          "dense_1best": {
+            "mrr": 0.7202
+          }
+        }
+      },
+      "non_ne_queries": {
+        "n": 1621,
+        "mrr": {
+          "oracle_bm25": {
+            "mrr": 0.7389
+          },
+          "bm25_1best": {
+            "mrr": 0.7211
+          },
+          "nbest_uniform": {
+            "mrr": 0.7321
+          },
+          "cart": {
+            "mrr": 0.7302
+          },
+          "dense_1best": {
+            "mrr": 0.6589
+          }
+        }
+      },
+      "index_cost": {
+        "oracle_bm25": {
+          "vocab": 24269,
+          "postings": 151275,
+          "phonetic_terms": 0
+        },
+        "bm25_1best": {
+          "vocab": 22319,
+          "postings": 153705,
+          "phonetic_terms": 0
+        },
+        "nbest_uniform": {
+          "vocab": 26593,
+          "postings": 161457,
+          "phonetic_terms": 0
+        },
+        "cart": {
+          "vocab": 25356,
+          "postings": 159014,
+          "phonetic_terms": 12761
+        }
+      }
+    },
+    "snr0": {
+      "n_docs": 1896,
+      "n_queries": 4021,
+      "asr": {
+        "wer": 0.1086,
+        "ne_wer": 0.2146,
+        "non_ne_wer": 0.0869,
+        "ne_token_share": 0.1699,
+        "mean_conf_correct": 0.9214,
+        "mean_conf_error": 0.6762,
+        "conf_auc": 0.8271,
+        "pct_words_lowconf": 0.1729,
+        "alt_coverage_lowconf": 0.2605,
+        "alt_postings_per_doc": 7.72,
+        "sub_errors": 19370,
+        "sub_flagged_lowconf": 0.6363,
+        "sub_recovered_by_alt": 0.2298,
+        "sub_phonetically_reachable": 0.4922
+      },
+      "systems": {
+        "oracle_bm25": {
+          "recall@1": 0.7394,
+          "recall@5": 0.8985,
+          "recall@10": 0.9281,
+          "mrr": 0.8081,
+          "ndcg@10": 0.8376,
+          "mrr_ci": [
+            0.7977,
+            0.8181
+          ],
+          "ms_per_query": 0.06,
+          "p_vs_bm25_1best": 0.0
+        },
+        "bm25_1best": {
+          "recall@1": 0.6802,
+          "recall@5": 0.8488,
+          "recall@10": 0.8866,
+          "mrr": 0.7521,
+          "ndcg@10": 0.7849,
+          "mrr_ci": [
+            0.7402,
+            0.7636
+          ],
+          "ms_per_query": 0.14
+        },
+        "nbest_uniform": {
+          "recall@1": 0.6936,
+          "recall@5": 0.8572,
+          "recall@10": 0.8968,
+          "mrr": 0.7646,
+          "ndcg@10": 0.7968,
+          "mrr_ci": [
+            0.7531,
+            0.7755
+          ],
+          "ms_per_query": 0.06,
+          "p_vs_bm25_1best": 0.0
+        },
+        "cart": {
+          "recall@1": 0.6976,
+          "recall@5": 0.8645,
+          "recall@10": 0.904,
+          "mrr": 0.7694,
+          "ndcg@10": 0.8022,
+          "mrr_ci": [
+            0.7581,
+            0.7802
+          ],
+          "ms_per_query": 61.86,
+          "p_vs_bm25_1best": 0.0
+        },
+        "dense_1best": {
+          "recall@1": 0.566,
+          "recall@5": 0.8115,
+          "recall@10": 0.8759,
+          "mrr": 0.6712,
+          "ndcg@10": 0.7208,
+          "mrr_ci": [
+            0.6584,
+            0.6839
+          ],
+          "ms_per_query": 3.96,
+          "p_vs_bm25_1best": 0.0
+        }
+      },
+      "ne_queries": {
+        "n": 2400,
+        "mrr": {
+          "oracle_bm25": {
+            "mrr": 0.8549
+          },
+          "bm25_1best": {
+            "mrr": 0.7841
+          },
+          "nbest_uniform": {
+            "mrr": 0.7982
+          },
+          "cart": {
+            "mrr": 0.8045
+          },
+          "dense_1best": {
+            "mrr": 0.6902
+          }
+        }
+      },
+      "non_ne_queries": {
+        "n": 1621,
+        "mrr": {
+          "oracle_bm25": {
+            "mrr": 0.7389
+          },
+          "bm25_1best": {
+            "mrr": 0.7046
+          },
+          "nbest_uniform": {
+            "mrr": 0.7149
+          },
+          "cart": {
+            "mrr": 0.7175
+          },
+          "dense_1best": {
+            "mrr": 0.643
+          }
+        }
+      },
+      "index_cost": {
+        "oracle_bm25": {
+          "vocab": 24269,
+          "postings": 151275,
+          "phonetic_terms": 0
+        },
+        "bm25_1best": {
+          "vocab": 21972,
+          "postings": 152473,
+          "phonetic_terms": 0
+        },
+        "nbest_uniform": {
+          "vocab": 27392,
+          "postings": 164714,
+          "phonetic_terms": 0
+        },
+        "cart": {
+          "vocab": 26152,
+          "postings": 161576,
+          "phonetic_terms": 17386
+        }
+      }
+    },
+    "snr-5": {
+      "n_docs": 1896,
+      "n_queries": 4021,
+      "asr": {
+        "wer": 0.3721,
+        "ne_wer": 0.4938,
+        "non_ne_wer": 0.3472,
+        "ne_token_share": 0.1699,
+        "mean_conf_correct": 0.8045,
+        "mean_conf_error": 0.5272,
+        "conf_auc": 0.7717,
+        "pct_words_lowconf": 0.4944,
+        "alt_coverage_lowconf": 0.2238,
+        "alt_postings_per_doc": 23.59,
+        "sub_errors": 65738,
+        "sub_flagged_lowconf": 0.7934,
+        "sub_recovered_by_alt": 0.0697,
+        "sub_phonetically_reachable": 0.283
+      },
+      "systems": {
+        "oracle_bm25": {
+          "recall@1": 0.7394,
+          "recall@5": 0.8985,
+          "recall@10": 0.9281,
+          "mrr": 0.8081,
+          "ndcg@10": 0.8376,
+          "mrr_ci": [
+            0.7977,
+            0.8181
+          ],
+          "ms_per_query": 0.06,
+          "p_vs_bm25_1best": 0.0
+        },
+        "bm25_1best": {
+          "recall@1": 0.4942,
+          "recall@5": 0.6767,
+          "recall@10": 0.7364,
+          "mrr": 0.5736,
+          "ndcg@10": 0.6128,
+          "mrr_ci": [
+            0.5592,
+            0.5874
+          ],
+          "ms_per_query": 0.06
+        },
+        "nbest_uniform": {
+          "recall@1": 0.5101,
+          "recall@5": 0.6894,
+          "recall@10": 0.7498,
+          "mrr": 0.5879,
+          "ndcg@10": 0.6269,
+          "mrr_ci": [
+            0.5735,
+            0.6016
+          ],
+          "ms_per_query": 0.06,
+          "p_vs_bm25_1best": 0.0
+        },
+        "cart": {
+          "recall@1": 0.5208,
+          "recall@5": 0.7147,
+          "recall@10": 0.7722,
+          "mrr": 0.6046,
+          "ndcg@10": 0.6451,
+          "mrr_ci": [
+            0.5911,
+            0.6177
+          ],
+          "ms_per_query": 81.9,
+          "p_vs_bm25_1best": 0.0
+        },
+        "dense_1best": {
+          "recall@1": 0.4089,
+          "recall@5": 0.6511,
+          "recall@10": 0.7463,
+          "mrr": 0.5121,
+          "ndcg@10": 0.568,
+          "mrr_ci": [
+            0.4989,
+            0.5257
+          ],
+          "ms_per_query": 3.96,
+          "p_vs_bm25_1best": 0.0
+        }
+      },
+      "ne_queries": {
+        "n": 2400,
+        "mrr": {
+          "oracle_bm25": {
+            "mrr": 0.8549
+          },
+          "bm25_1best": {
+            "mrr": 0.5941
+          },
+          "nbest_uniform": {
+            "mrr": 0.61
+          },
+          "cart": {
+            "mrr": 0.6306
+          },
+          "dense_1best": {
+            "mrr": 0.5159
+          }
+        }
+      },
+      "non_ne_queries": {
+        "n": 1621,
+        "mrr": {
+          "oracle_bm25": {
+            "mrr": 0.7389
+          },
+          "bm25_1best": {
+            "mrr": 0.5431
+          },
+          "nbest_uniform": {
+            "mrr": 0.5551
+          },
+          "cart": {
+            "mrr": 0.5662
+          },
+          "dense_1best": {
+            "mrr": 0.5065
+          }
+        }
+      },
+      "index_cost": {
+        "oracle_bm25": {
+          "vocab": 24269,
+          "postings": 151275,
+          "phonetic_terms": 0
+        },
+        "bm25_1best": {
+          "vocab": 17909,
+          "postings": 155185,
+          "phonetic_terms": 0
+        },
+        "nbest_uniform": {
+          "vocab": 22938,
+          "postings": 179486,
+          "phonetic_terms": 0
+        },
+        "cart": {
+          "vocab": 21991,
+          "postings": 173189,
+          "phonetic_terms": 20071
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+# Generated data and caches — regenerate with scripts/01_prepare_data.py
+data/audio/
+data/*.jsonl
+data/dev-v1.1.json
+data/g2p_cache.pkl
+.hf_cache/
+.pip_cache/
+.conda_pkgs/
+.nltk_data/
+env/
+runs/
+logs/
+*.pyc
+__pycache__/
+
+# Results are committed (they are the findings), but not the bulky arrays
+results/*.npy
+results/_smoke.json
+
+# Site build scratch
+docs/demo_data.json.tmp

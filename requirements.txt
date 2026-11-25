@@ -1,0 +1,23 @@
+# Validated stack for CART. Versions are pinned because Qwen2.5 needs bf16
+# (so torch >= 2.1) while sentence-transformers 3.0.1 needs huggingface_hub
+# < 0.25, which in turn pins transformers and datasets.
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.5.1
+numpy<2
+huggingface_hub==0.24.6
+transformers==4.44.2
+tokenizers<0.20
+sentence-transformers==3.0.1
+datasets==2.21.0
+faster-whisper==1.1.0
+ctranslate2==4.5.0
+rank_bm25==0.2.2
+g2p_en==2.1.0
+nltk==3.9.1
+jiwer==3.0.4
+soundfile==0.12.1
+librosa==0.10.2.post1
+pyarrow==17.0.0            # 19+ requires numpy>=2, which conflicts with the numpy<2 pin
+matplotlib==3.9.2
+accelerate==0.34.2
+sentencepiece
