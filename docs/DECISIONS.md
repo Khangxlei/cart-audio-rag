@@ -239,3 +239,50 @@ several times smaller than the naive form.
 | The demo's ranks do not match the paper | Expected, and stated on the page — 825 passages against 1,896 changes IDF |
 | Pages has not updated | `gh api repos/Khangxlei/cart-audio-rag/pages/builds --jq '.[0].status'` |
 | A commit shows the wrong author | `git log --format='%an <%ae>'` — all should read `Khang Le` |
+
+---
+
+## 7. Deployment state at hand-off (2026-11-25, 16:05 UTC)
+
+**The repository is complete and pushed.** Everything below concerns GitHub's
+own availability, not the contents of this repository.
+
+GitHub was in a **critical incident** while this was being finished, with
+Pages, Actions, Webhooks, Issues and Pull Requests all degraded
+(`githubstatus.com`). The consequences here:
+
+- The **home page is live** — `https://khangxlei.github.io/cart-audio-rag/`
+  returns 200. It was published by the first Pages build, which ran before the
+  incident began.
+- **`demo.html` and the newer assets return 404.** Every Pages build after the
+  first has failed. The legacy builder reports only `Page build failed`; an
+  Actions deploy failed with `HTTP 500 ... Server error, is githubstatus.com
+  reporting a Pages outage? Please re-run the deployment at a later time`.
+  That message is the diagnosis.
+- The link to the demo on the live home page is therefore **temporarily
+  broken**, and so is the README's GIF, until a build succeeds.
+
+**Nothing needs fixing in the repository.** The files are all present on
+`main` — confirm with
+`gh api repos/Khangxlei/cart-audio-rag/contents/docs --jq '.[].name'`.
+
+### What to do when GitHub recovers
+
+Usually nothing: the legacy builder retries on the next push, so a trivial
+commit is enough.
+
+```bash
+gh api repos/Khangxlei/cart-audio-rag/pages/builds --jq '.[0] | "\(.status) \(.error.message // "ok")"'
+curl -o /dev/null -w '%{http_code}\n' https://khangxlei.github.io/cart-audio-rag/demo.html
+```
+
+If the legacy builder keeps failing once GitHub is green, switch to the
+workflow that is already committed at `.github/workflows/pages.yml`:
+
+1. Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+2. Actions → *Deploy project page* → **Run workflow**.
+
+It uploads `docs/` verbatim with no Jekyll step, and prints a readable log if a
+deploy fails. It is deliberately manual-only for now, because a workflow deploy
+cannot succeed while the source is still set to the legacy builder, and
+triggering it on push would put a failed run on every commit.
