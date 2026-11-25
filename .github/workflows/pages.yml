@@ -1,0 +1,36 @@
+# Publish docs/ to GitHub Pages as a plain static site.
+#
+# The legacy Pages builder runs Jekyll over the folder and was failing with an
+# unexplained "Page build failed". Nothing here needs Jekyll -- the site is
+# hand-written HTML, CSS and JS -- so this uploads docs/ verbatim instead, which
+# is both deterministic and gives readable logs when something breaks.
+name: Deploy project page
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4
