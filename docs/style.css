@@ -214,3 +214,13 @@ footer a { color: var(--fg-muted); }
 .chart text { font-family: var(--sans); fill: var(--fg-muted); }
 .chart .axis { stroke: var(--rule); }
 .chart .glabel { fill: var(--fg); font-weight: 600; }
+
+/* diagram boxes: fills must follow the theme, or light-filled boxes keep
+   light-coloured labels in dark mode and the text disappears */
+.chart .bx { stroke-width: 1.5; }
+.chart .bx-plain { fill: none; stroke: var(--rule); }
+.chart .bx-dash { fill: none; stroke: var(--rule); stroke-dasharray: 4 3; }
+.chart .bx-soft { fill: var(--bg-inset); stroke: var(--rule); }
+.chart .bx-acc { fill: var(--accent-soft); stroke: var(--accent); }
+.chart .bx-good { fill: var(--good-soft); stroke: var(--good); }
+.chart .eyebrow-svg { fill: var(--accent); }

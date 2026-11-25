@@ -155,14 +155,14 @@
       <g font-size="13" color="#8b95a1">
 
         <!-- stage 1 -->
-        <text x="20" y="20" font-size="11.5" letter-spacing="1.2" fill="#1f6feb" font-weight="700">1 · RECOGNISE</text>
-        <rect x="20" y="32" width="150" height="54" rx="9" fill="none" stroke="#dfe3e8" stroke-width="1.5"></rect>
+        <text x="20" y="20" font-size="11.5" letter-spacing="1.2" class="eyebrow-svg" font-weight="700">1 · RECOGNISE</text>
+        <rect x="20" y="32" width="150" height="54" rx="9" class="bx bx-plain"></rect>
         <text x="95" y="56" text-anchor="middle" class="glabel" font-size="13.5">audio segment</text>
         <text x="95" y="73" text-anchor="middle" font-size="11.5">30 s window</text>
 
         <line x1="95" y1="86" x2="95" y2="112" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
 
-        <rect x="20" y="116" width="150" height="58" rx="9" fill="#eef1f5" stroke="#dfe3e8" stroke-width="1.5"></rect>
+        <rect x="20" y="116" width="150" height="58" rx="9" class="bx bx-soft"></rect>
         <text x="95" y="139" text-anchor="middle" class="glabel" font-size="13.5">Whisper</text>
         <text x="95" y="156" text-anchor="middle" font-size="11.5">beam search, 8 beams</text>
 
@@ -172,26 +172,26 @@
         <line x1="170" y1="145" x2="218" y2="288" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
 
         <!-- stage 2 -->
-        <text x="225" y="20" font-size="11.5" letter-spacing="1.2" fill="#1f6feb" font-weight="700">2 · INDEX &mdash; THREE CHANNELS</text>
+        <text x="225" y="20" font-size="11.5" letter-spacing="1.2" class="eyebrow-svg" font-weight="700">2 · INDEX &mdash; THREE CHANNELS</text>
 
-        <rect x="225" y="46" width="290" height="62" rx="9" fill="none" stroke="#dfe3e8" stroke-width="1.5"></rect>
+        <rect x="225" y="46" width="290" height="62" rx="9" class="bx bx-plain"></rect>
         <text x="239" y="68" class="glabel" font-size="13.5">1-best transcript</text>
         <text x="239" y="86" font-size="11.5">→ BM25 postings, weight 1</text>
         <text x="239" y="101" font-size="11.5">→ document length comes from here only</text>
 
-        <rect x="225" y="148" width="290" height="76" rx="9" fill="#e7f0ff" stroke="#1f6feb" stroke-width="1.5"></rect>
+        <rect x="225" y="148" width="290" height="76" rx="9" class="bx bx-acc"></rect>
         <text x="239" y="170" class="glabel" font-size="13.5">beam alternatives, where p &lt; τ</text>
         <text x="239" y="188" font-size="11.5">→ extra postings at the same audio position,</text>
         <text x="239" y="203" font-size="11.5">&nbsp;&nbsp;&nbsp;weight α = 0.5</text>
         <text x="239" y="218" font-size="11.5">→ only for words the recognizer was unsure of</text>
 
-        <rect x="225" y="256" width="290" height="76" rx="9" fill="#e7f0ff" stroke="#1f6feb" stroke-width="1.5"></rect>
+        <rect x="225" y="256" width="290" height="76" rx="9" class="bx bx-acc"></rect>
         <text x="239" y="278" class="glabel" font-size="13.5">phonemes of low-confidence terms</text>
         <text x="239" y="296" font-size="11.5">→ articulatory-feature edit distance</text>
         <text x="239" y="311" font-size="11.5">→ fires only where surface matching failed</text>
         <text x="239" y="326" font-size="11.5">→ blocked by phoneme bigram for speed</text>
 
-        <rect x="225" y="356" width="290" height="46" rx="9" fill="none" stroke="#dfe3e8" stroke-width="1.5" stroke-dasharray="4 3"></rect>
+        <rect x="225" y="356" width="290" height="46" rx="9" class="bx bx-dash"></rect>
         <text x="239" y="378" class="glabel" font-size="13.5">chunk confidence c</text>
         <text x="239" y="394" font-size="11.5">mean word probability for the segment</text>
 
@@ -202,13 +202,13 @@
         <line x1="515" y1="379" x2="560" y2="240" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"></line>
 
         <!-- stage 3 -->
-        <text x="575" y="20" font-size="11.5" letter-spacing="1.2" fill="#1f6feb" font-weight="700">3 · SCORE</text>
+        <text x="575" y="20" font-size="11.5" letter-spacing="1.2" class="eyebrow-svg" font-weight="700">3 · SCORE</text>
 
-        <rect x="575" y="46" width="305" height="52" rx="9" fill="none" stroke="#dfe3e8" stroke-width="1.5"></rect>
+        <rect x="575" y="46" width="305" height="52" rx="9" class="bx bx-plain"></rect>
         <text x="727" y="69" text-anchor="middle" class="glabel" font-size="13.5">query</text>
         <text x="727" y="86" text-anchor="middle" font-size="11.5">"what is the cell membrane made of"</text>
 
-        <rect x="575" y="162" width="305" height="92" rx="9" fill="#e3f5ea" stroke="#1a7f4b" stroke-width="1.5"></rect>
+        <rect x="575" y="162" width="305" height="92" rx="9" class="bx bx-good"></rect>
         <text x="727" y="188" text-anchor="middle" class="glabel" font-size="15" font-family="Charter, Georgia, serif">
           s = s<tspan font-size="11" dy="3">text</tspan><tspan dy="-3"> + λ·(1−c)·s</tspan><tspan font-size="11" dy="3">phonetic</tspan>
         </text>
@@ -219,7 +219,7 @@
         <line x1="727" y1="98" x2="727" y2="158" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
         <line x1="727" y1="254" x2="727" y2="300" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
 
-        <rect x="575" y="304" width="305" height="54" rx="9" fill="#eef1f5" stroke="#dfe3e8" stroke-width="1.5"></rect>
+        <rect x="575" y="304" width="305" height="54" rx="9" class="bx bx-soft"></rect>
         <text x="727" y="327" text-anchor="middle" class="glabel" font-size="13.5">ranked audio segments</text>
         <text x="727" y="344" text-anchor="middle" font-size="11.5">with timestamps, ready for a reader LLM</text>
       </g>
