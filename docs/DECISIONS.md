@@ -24,6 +24,23 @@ git log --format='%an <%ae> | %cn <%ce>' | sort -u
 git log --all --format='%B' | grep -ri 'claude\|anthropic\|co-authored' || echo clean
 ```
 
+**One loose end in the history.** Three early commits carry a `.gitignore`
+line naming an editor-local directory. The current tree no longer has it (it
+moved to `.git/info/exclude`, which is never committed), but removing it from
+those three commits needs a force-push, which rewrites published history. That
+was not done unattended. If you want the history scrubbed as well, from a clean
+checkout:
+
+```bash
+git filter-branch -f --tree-filter "sed -i '/^\.claude\/$/d' .gitignore" -- --all
+git for-each-ref --format='%(refname)' refs/original/ | xargs -n1 git update-ref -d
+git push --force-with-lease origin main
+```
+
+It is cosmetic: no commit is authored or co-authored by anything other than
+Khang Le, in any revision, and the audit commands above confirm that across the
+whole object graph.
+
 **Commit structure.** Three commits rather than one: the implementation and
 results, then the site, then a fix. Each has a message that explains the
 reasoning, not just the diff.
