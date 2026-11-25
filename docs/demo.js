@@ -7,7 +7,7 @@
   'use strict';
 
   var DATA = null;
-  var state = { qid: null, word: null };
+  var state = { qid: null, word: null, cond: null };
   var TUNED = { tau: 0.8, lam: 2.0, theta: 0.55, alpha: 0.5, gate: true };
 
   var el = function (id) { return document.getElementById(id); };
@@ -22,19 +22,28 @@
      percents, alternatives keyed by word index — because the uncompressed form
      is several times larger over the wire. Expand once, here, so the rest of
      the page (and cart.js) sees the ordinary shape. */
-  function unpack(d) {
-    d.conditions = d.conditions || ['clean'];
-    var cond = d.conditions[0];
-    d.docs = d.docs.map(function (x) {
-      var toks = x.t ? x.t.split(' ') : [];
-      var alts = x.a || {};
-      var words = toks.map(function (w, i) {
-        var rec = [w, (x.p[i] || 0) / 100];
+  function expandBlock(b) {
+    var toks = b.t ? b.t.split(' ') : [];
+    var alts = b.a || {};
+    return {
+      words: toks.map(function (w, i) {
+        var rec = [w, (b.p[i] || 0) / 100];
         if (alts[i]) rec.push(alts[i]);
         return rec;
-      });
+      }),
+      conf: b.c
+    };
+  }
+
+  function unpack(d) {
+    d.conditions = d.conditions || ['clean'];
+    d.docs = d.docs.map(function (x) {
       var conds = {};
-      conds[cond] = { words: words, conf: x.c };
+      if (x.cond) {
+        Object.keys(x.cond).forEach(function (k) { conds[k] = expandBlock(x.cond[k]); });
+      } else {
+        conds[d.conditions[0]] = expandBlock(x);   // single-condition payload
+      }
       return { id: x.id, title: x.ti || '', gold: x.g || '', conds: conds };
     });
   }
@@ -93,6 +102,8 @@
     el('theta').value = TUNED.theta; el('alpha').value = TUNED.alpha;
     syncOuts();
 
+    state.cond = DATA.conditions[0];
+    buildConditionPicker();
     markQueries();
     buildChips();
 
@@ -178,6 +189,39 @@
     box.appendChild(legend);
   }
 
+  /* The payload may carry one acoustic condition or several. With several,
+     offer a switcher: watching the gate open as the audio degrades is the whole
+     point of the method, and it is the clearest thing the demo can show. */
+  function buildConditionPicker() {
+    if (!DATA.conditions || DATA.conditions.length < 2) return;
+    var host = el('queryChips').parentNode;
+    var box = document.createElement('div');
+    box.className = 'condpick';
+    var label = document.createElement('span');
+    label.textContent = 'audio condition:';
+    box.appendChild(label);
+    DATA.conditions.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip cond';
+      b.textContent = c + (DATA.wer && DATA.wer[c] != null
+        ? '  (' + (DATA.wer[c] * 100).toFixed(1) + '% WER)' : '');
+      b.setAttribute('aria-pressed', c === state.cond ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        state.cond = c;
+        retCache = Object.create(null);     // indexes are per-condition
+        Array.prototype.forEach.call(box.querySelectorAll('.cond'), function (o) {
+          o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+        });
+        markQueries();
+        buildChips();
+        selectQuery(state.qid);
+      });
+      box.appendChild(b);
+    });
+    host.insertBefore(box, el('queryChips'));
+  }
+
   function currentQuery() {
     for (var i = 0; i < DATA.queries.length; i++) {
       if (DATA.queries[i].qid === state.qid) return DATA.queries[i];
@@ -193,7 +237,7 @@
     });
     var q = currentQuery();
     var doc = DATA.byId[q.gold];
-    var cond = DATA.conditions[0];
+    var cond = state.cond;
     var werPct = ((DATA.wer && DATA.wer[cond] != null) ? DATA.wer[cond] * 100 : 0).toFixed(1);
 
     var conf = doc.conds[cond].conf;
@@ -218,7 +262,7 @@
   function drawTranscript() {
     var q = currentQuery();
     var doc = DATA.byId[q.gold];
-    var cond = DATA.conditions[0];
+    var cond = state.cond;
     var c = doc.conds[cond];
     var tau = +el('tau').value;
     var missing = Object.create(null);
@@ -258,7 +302,7 @@
 
   function showWord(i) {
     var q = currentQuery();
-    var c = DATA.byId[q.gold].conds[DATA.conditions[0]];
+    var c = DATA.byId[q.gold].conds[state.cond];
     var w = c.words[i];
     state.word = i;
     Array.prototype.forEach.call(el('transcript').querySelectorAll('.tw'), function (s) {
@@ -303,12 +347,12 @@
 
   function retrieverFor(sys, cfg) {
     // only the knobs that actually change the index belong in the key
-    var key = sys.key + '|' +
+    var key = state.cond + '|' + sys.key + '|' +
       (sys.key === '1best' ? '' :
        sys.key === 'nbest_uniform' ? cfg.alpha :
        cfg.tau + ',' + cfg.alpha + ',' + cfg.theta);
     if (!retCache[key]) {
-      retCache[key] = CART.buildRetriever(DATA, DATA.conditions[0], sys.key, cfg);
+      retCache[key] = CART.buildRetriever(DATA, state.cond, sys.key, cfg);
     }
     var r = retCache[key];
     r.cfg = cfg;            // λ and the gate are read at scoring time
@@ -466,7 +510,7 @@
       }
     } else if (base && ours && ours === base) {
       var q2 = currentQuery();
-      var c2 = DATA.byId[q2.gold].conds[DATA.conditions[0]].conf;
+      var c2 = DATA.byId[q2.gold].conds[state.cond].conf;
       note.hidden = false;
       note.className = 'note';
       note.innerHTML = '<p><span class="lbl">Same rank for all three systems here</span> (' + ours +

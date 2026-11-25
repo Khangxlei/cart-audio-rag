@@ -9,6 +9,10 @@ the key term in that segment was transcribed wrongly.
 **▤ [Generated report](results/REPORT.md)** ·
 **⎇ [Run log and provenance](docs/RUN_LOG.md)**
 
+![The CART interactive demo: picking a question, inspecting per-word confidence, following the three index channels, and watching the ranking change when the confidence gate is switched off](docs/assets/demo.gif)
+
+*The [interactive demo](https://khangxlei.github.io/cart-audio-rag/demo.html) runs the scorer in the browser over 825 real transcripts. Switching off the confidence gate reproduces the paper's main ablation live: the answer falls from rank 5 to rank 13.*
+
 ---
 
 ## What problem this solves
