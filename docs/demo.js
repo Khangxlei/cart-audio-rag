@@ -61,10 +61,9 @@
       (d.stopwords || []).forEach(function (w) { DATA.stopset[w] = 1; });
       DATA.byId = Object.create(null);
       d.docs.forEach(function (x) { DATA.byId[x.id] = x; });
+      init();
       el('loading').hidden = true;
       el('app').hidden = false;
-      el('provenance').textContent = d.provenance || '';
-      init();
     })
     .catch(function (e) {
       el('loading').hidden = true;
@@ -105,7 +104,10 @@
     state.cond = DATA.conditions[0];
     buildConditionPicker();
     markQueries();
-    buildChips();
+    buildQuestions();
+    el('querySelect').addEventListener('change', function (event) {
+      selectQuery(event.target.value);
+    });
 
     el('wordA').addEventListener('input', playground);
     el('wordB').addEventListener('input', playground);
@@ -116,7 +118,7 @@
     });
 
     // open on a question where the ranking actually moves, so the first view
-    // shows the mechanism doing something; the chips make the rest visible
+    // shows a ranking change; all questions are available in the picker
     var opener = DATA.queries.filter(function (q) { return q._delta > 0; })[0] ||
                  DATA.queries[0];
     selectQuery(opener.qid);
@@ -143,10 +145,7 @@
   }
 
   // -------------------------------------------------------------- step 1
-  /* Mark every question with what CART actually does to it at the tuned
-     settings, so nothing is hidden: ↑ moved the answer up, = unchanged,
-     ↓ moved it down. Most are unchanged on clean audio, and that is the
-     honest picture. */
+  // The question picker shows each answer’s rank change at the default settings.
   function markQueries() {
     var cfg = {
       tau: TUNED.tau, lam: TUNED.lam, theta: TUNED.theta, alpha: TUNED.alpha,
@@ -155,38 +154,17 @@
     };
     DATA.queries.forEach(function (q) {
       var r = evaluate(q, cfg);
-      q._base = r[0].rank;
-      q._cart = r[2].rank;
       q._delta = r[0].rank - r[2].rank;
     });
   }
 
-  function buildChips() {
-    var box = el('queryChips');
-    box.innerHTML = '';
+  function buildQuestions() {
+    var select = el('querySelect');
+    select.replaceChildren();
     DATA.queries.forEach(function (q) {
-      var b = document.createElement('button');
-      b.className = 'chip';
-      b.type = 'button';
-      b.setAttribute('aria-pressed', 'false');
-      b.dataset.qid = q.qid;
       var mark = q._delta > 0 ? '↑ ' : q._delta < 0 ? '↓ ' : '= ';
-      var short = q.q.length > 48 ? q.q.slice(0, 46) + '…' : q.q;
-      b.textContent = mark + short;
-      b.title = q.q + '  —  answer at rank ' + q._base + ' for the baseline, ' +
-                q._cart + ' for CART';
-      b.addEventListener('click', function () { selectQuery(q.qid); });
-      box.appendChild(b);
+      select.add(new Option(mark + q.q, q.qid));
     });
-    var n = DATA.queries.filter(function (q) { return q._delta > 0; }).length;
-    var w = DATA.queries.filter(function (q) { return q._delta < 0; }).length;
-    var legend = document.createElement('p');
-    legend.className = 'chiplegend';
-    legend.innerHTML = '↑ CART moved the answer up &middot; = unchanged &middot; ↓ moved it down. ' +
-      'On this clean-audio sample ' + n + ' of ' + DATA.queries.length + ' improve, ' + w +
-      ' get worse, the rest are unchanged — which is what a +0.007 MRR gain at 4.2% WER looks like ' +
-      'query by query. The method is built for the noisy end of the range.';
-    box.appendChild(legend);
   }
 
   /* The payload may carry one acoustic condition or several. With several,
@@ -194,7 +172,7 @@
      point of the method, and it is the clearest thing the demo can show. */
   function buildConditionPicker() {
     if (!DATA.conditions || DATA.conditions.length < 2) return;
-    var host = el('queryChips').parentNode;
+    var host = el('queryControls').parentNode;
     var box = document.createElement('div');
     box.className = 'condpick';
     var label = document.createElement('span');
@@ -214,12 +192,12 @@
           o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
         });
         markQueries();
-        buildChips();
+        buildQuestions();
         selectQuery(state.qid);
       });
       box.appendChild(b);
     });
-    host.insertBefore(box, el('queryChips'));
+    host.insertBefore(box, el('queryControls'));
   }
 
   function currentQuery() {
@@ -232,9 +210,7 @@
   function selectQuery(qid) {
     state.qid = qid;
     state.word = null;
-    Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (c) {
-      c.setAttribute('aria-pressed', c.dataset.qid === qid ? 'true' : 'false');
-    });
+    el('querySelect').value = qid;
     var q = currentQuery();
     var doc = DATA.byId[q.gold];
     var cond = state.cond;
@@ -254,7 +230,6 @@
           '</div>'
         : '');
 
-    drawTranscript();
     rerank();
   }
 
@@ -265,22 +240,14 @@
     var cond = state.cond;
     var c = doc.conds[cond];
     var tau = +el('tau').value;
-    var missing = Object.create(null);
-    (q.missing || []).forEach(function (m) { missing[m] = 1; });
-    var qterms = Object.create(null);
-    CART.tokenize(q.q).forEach(function (t) {
-      if (DATA.stopset[t] !== 1 && CART.indexable(t)) qterms[t] = 1;
-    });
-
     var html = '';
     c.words.forEach(function (w, i) {
       var cls = 'tw', p = w[1], hasAlt = (w[2] || []).length > 0;
       if (p < tau && hasAlt) cls += ' alt';
       else if (p < tau) cls += ' lo';
       else if (p < 0.9) cls += ' md';
-      if (qterms[w[0]]) cls += ' qt';
-      html += '<span class="' + cls + '" data-i="' + i + '" title="p = ' + p.toFixed(2) + '">' +
-              esc(w[0]) + '</span> ';
+      html += '<button type="button" aria-pressed="false" class="' + cls + '" data-i="' + i + '" title="p = ' + p.toFixed(2) + '">' +
+              esc(w[0]) + '</button> ';
     });
     // the terms the transcript lost are shown separately: they are, by
     // definition, not in the transcript to highlight
@@ -291,13 +258,7 @@
     });
 
     el('goldText').textContent = doc.gold;
-    el('wordInfo').innerHTML =
-      'Click a word above to see its confidence and the spellings competing beams proposed.' +
-      (q.missing && q.missing.length
-        ? ' <em>Note the query terms ' +
-          q.missing.map(function (m) { return '<code>' + esc(m) + '</code>'; }).join(', ') +
-          ' are nowhere in this transcript — that is the failure CART has to recover from.</em>'
-        : '');
+    el('wordInfo').textContent = 'Select a word to inspect it.';
   }
 
   function showWord(i) {
@@ -306,15 +267,17 @@
     var w = c.words[i];
     state.word = i;
     Array.prototype.forEach.call(el('transcript').querySelectorAll('.tw'), function (s) {
-      s.classList.toggle('sel', +s.dataset.i === i);
+      var selected = +s.dataset.i === i;
+      s.classList.toggle('sel', selected);
+      s.setAttribute('aria-pressed', String(selected));
     });
     var tau = +el('tau').value;
     var ph = DATA.phones[w[0]];
     var out = '<span class="wtag">' + esc(w[0]) + '</span> &nbsp; confidence <b>' +
       w[1].toFixed(2) + '</b> &nbsp; ' +
       (w[1] < tau
-        ? '<span style="color:var(--accent)">below τ = ' + tau.toFixed(2) + ', so CART expands it</span>'
-        : '<span style="color:var(--fg-faint)">at or above τ, so CART leaves it alone</span>');
+        ? '<span style="color:var(--accent)">below the confidence threshold (' + tau.toFixed(2) + ')</span>'
+        : '<span style="color:var(--fg-faint)">at or above the confidence threshold</span>');
     if (ph) out += ' &nbsp; <span class="phonepill">' + esc(ph.join(' ')) + '</span>';
 
     var alts = w[2] || [];
@@ -374,8 +337,8 @@
     var cfg = knobs();
     var results = evaluate(q, cfg);
 
-    drawChannels(results, q, cfg);
-    drawRanks(results, q);
+    drawChannels(results, cfg);
+    drawRanks(results);
     drawTranscriptClasses();
   }
 
@@ -387,7 +350,7 @@
     if (keep != null) showWord(keep);
   }
 
-  function drawChannels(results, q, cfg) {
+  function drawChannels(results, cfg) {
     var cart = results[2];
     var goldIdx = cart.goldIdx;
     var terms = cart.sc.terms;
@@ -441,23 +404,22 @@
     }
 
     el('channels').innerHTML =
-      '<div class="ch"><h4><span class="dot d1"></span>1 · Text (1-best)</h4>' +
+      '<div class="ch"><h3><span class="dot d1"></span>1 · Text (1-best)</h3>' +
       '<p class="cdesc">Ordinary BM25 over what the recognizer wrote.</p><ul>' +
       (textRows || '<li class="none">no content terms in this query</li>') + '</ul></div>' +
 
-      '<div class="ch"><h4><span class="dot d2"></span>2 · Alternative spellings</h4>' +
+      '<div class="ch"><h3><span class="dot d2"></span>2 · Alternative spellings</h3>' +
       '<p class="cdesc">Beam alternatives for words below τ = ' + cfg.tau.toFixed(2) +
       ', added as extra postings.</p><ul>' + altRows + '</ul></div>' +
 
-      '<div class="ch"><h4><span class="dot d3"></span>3 · Phonetic fallback</h4>' +
+      '<div class="ch"><h3><span class="dot d3"></span>3 · Phonetic fallback</h3>' +
       '<p class="cdesc">Query term matched to a low-confidence term that <em>sounds</em> like it (θ = ' +
       cfg.theta.toFixed(2) + ').</p><ul>' + phRows + '</ul></div>';
   }
 
-  function drawRanks(results, q) {
+  function drawRanks(results) {
     var html = results.map(function (r) {
       var top = r.sc.order.slice(0, 6);
-      var max = r.sc.total[r.sc.order[0]] || 1;
       var items = top.map(function (di, i) {
         var d = DATA.byId[r.ret.bm25.docIds[di]];
         var isGold = di === r.goldIdx;
@@ -470,7 +432,7 @@
       }).join('');
       var found = r.rank > 0;
       return '<div class="rank' + (r.sys.ours ? ' ours' : '') + '">' +
-        '<div class="rhead"><h4>' + esc(r.sys.label) + '</h4>' +
+        '<div class="rhead"><h3>' + esc(r.sys.label) + '</h3>' +
         '<div class="gold">' + esc(r.sys.note) + ' &middot; answer at rank <b>' +
         (found ? r.rank : '—') + '</b>' +
         (found ? ' &middot; RR ' + (1 / r.rank).toFixed(3) : '') + '</div></div>' +
@@ -480,49 +442,17 @@
 
     var base = results[0].rank, ours = results[2].rank;
     var note = el('rankNote');
-    if (base && ours && ours < base) {
-      note.hidden = false;
-      note.className = 'note good';
-      note.innerHTML = '<p><span class="lbl">CART moved the answer up, ' +
-        'from rank ' + base + ' to rank ' + ours + '.</span> Step 3 shows which channel did it.</p>';
-    } else if (base && ours && ours > base) {
-      note.hidden = false;
-      note.className = 'note warn';
-      if (!el('gate').checked) {
-        note.innerHTML = '<p><span class="lbl">This is the confidence gate being switched off, ' +
-          'and it is the most important result in the paper.</span> The answer has fallen from rank ' +
-          base + ' to rank ' + ours + '.</p>' +
-          '<p>Without the <code>(1 − c)</code> factor the phonetic channel is trusted equally on every ' +
-          'passage, including the ones the recognizer got right, so phonetic near-matches start ' +
-          'outscoring genuine text matches. In the full experiment this costs 0.141 MRR at 37% WER — ' +
-          'an order of magnitude more than removing either retrieval channel. Tick the gate again to ' +
-          'restore it.</p>';
-      } else if (+el('lam').value > 6) {
-        note.innerHTML = '<p><span class="lbl">λ is high enough to drown the text score.</span> ' +
-          'The answer sits at rank ' + ours + ' against ' + base + ' for the baseline. The measured ' +
-          'λ sweep does the same thing: at 37% WER, λ = 8 collapses MRR to 0.291 and λ = 16 to 0.062. ' +
-          'The phonetic channel has to be weighted, not merely switched on.</p>';
-      } else {
-        note.innerHTML = '<p><span class="lbl">On this query CART ranks the answer lower</span> — ' +
-          'rank ' + ours + ' against ' + base + ' for the baseline. Expansion adds evidence to other ' +
-          'passages too, and it does not always pay off. The reported result is a mean over 4,021 ' +
-          'queries, not a guarantee on any single one.</p>';
-      }
-    } else if (base && ours && ours === base) {
-      var q2 = currentQuery();
-      var c2 = DATA.byId[q2.gold].conds[state.cond].conf;
-      note.hidden = false;
-      note.className = 'note';
-      note.innerHTML = '<p><span class="lbl">Same rank for all three systems here</span> (' + ours +
-        '), and on clean audio that is the expected answer rather than a disappointment.</p>' +
-        '<p>This passage has confidence <b>c = ' + c2.toFixed(3) + '</b>, so the gate <code>(1 − c)</code> ' +
-        'is <b>' + (1 - c2).toFixed(3) + '</b> — the phonetic channel is scaled down to near nothing, ' +
-        '<em>by design</em>. That is exactly why the measured gain at 4.2% WER is only +0.007 MRR, ' +
-        'and why CART separates from the baseline at 37% WER, where confidence falls and the gate opens. ' +
-        'To see the machinery act, untick the confidence gate or push λ up — then watch the ranking move.</p>';
-    } else {
-      note.hidden = true;
-    }
+    note.hidden = !base || !ours;
+    if (note.hidden) return;
+
+    var message = ours === base
+      ? 'CART and transcript-only search both place the answer at rank ' + ours + '.'
+      : 'CART places the answer at rank ' + ours + '. Transcript-only search places it at rank ' + base + '.';
+    var guide = el('gate').checked
+      ? 'Turn off uncertainty scaling to compare the rankings with the same sound weight for every passage.'
+      : 'Uncertainty scaling is off. Sound matches now have the same weight across all passages.';
+    note.className = 'note' + (ours < base ? ' good' : ours > base ? ' warn' : '');
+    note.textContent = message + ' ' + guide;
   }
 
   // -------------------------------------------------------------- step 5
@@ -539,8 +469,7 @@
       if (!pb) miss.push(b);
       out.innerHTML = '<span class="verdict">No pronunciation shipped for ' +
         miss.map(function (m) { return '<code>' + esc(m) + '</code>'; }).join(' and ') +
-        '. This page carries phonemes only for the vocabulary of its sample — ' +
-        'grapheme-to-phoneme needs a model that cannot run in a static page. Try one of the pairs below.</span>';
+        '. Try one of the pairs below.</span>';
       return;
     }
     var sim = CART.phoneticSimilarity(pa, pb);
@@ -549,12 +478,12 @@
       : sim >= 0.55 ? 'similar enough to pass the default θ = 0.55'
       : 'not confusable; below θ, so CART would not link these';
     out.innerHTML =
-      '<div class="big" style="color:' + (sim >= 0.55 ? 'var(--good)' : 'var(--fg-muted)') + '">' +
+      '<div class="big' + (sim >= 0.55 ? ' is-match' : '') + '">' +
       sim.toFixed(2) + '</div>' +
       '<div class="simbar"><i style="width:' + (sim * 100).toFixed(0) + '%"></i></div>' +
       '<div><span class="phonepill">' + esc(pa.join(' ')) + '</span> &nbsp;vs&nbsp; ' +
       '<span class="phonepill">' + esc(pb.join(' ')) + '</span></div>' +
-      '<div class="verdict" style="margin-top:9px">weighted edit cost ' + dist.toFixed(2) +
+      '<div class="verdict">weighted edit cost ' + dist.toFixed(2) +
       ' &middot; ' + verdict + '</div>';
   }
 })();

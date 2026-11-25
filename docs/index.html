@@ -1,580 +1,87 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CART — Confidence-Aware Retrieval for Audio RAG</title>
-<meta name="description" content="A training-free retrieval layer that uses a speech recognizer's own uncertainty to recover spoken passages whose key terms were mistranscribed.">
-<meta property="og:title" content="CART — Confidence-Aware Retrieval for Audio RAG">
-<meta property="og:description" content="Using the recognizer's own uncertainty to retrieve spoken passages it transcribed wrongly. Evaluated on Spoken-SQuAD across four noise levels.">
-<meta property="og:type" content="website">
-<link rel="stylesheet" href="style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>🔎</text></svg>">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CART uses speech recognition confidence, alternative spellings, and sound to find spoken passages after transcription errors.">
+  <meta property="og:title" content="CART — Confidence-Aware Retrieval for Audio RAG">
+  <meta property="og:description" content="Find the right spoken passage when the transcript gets a key word wrong.">
+  <meta property="og:type" content="website">
+  <title>CART — Confidence-Aware Retrieval for Audio RAG</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <header class="site-header">
+    <nav class="wrap site-nav" aria-label="Main navigation">
+      <a class="brand" href="./" aria-current="page">CART</a>
+      <div class="nav-links">
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a class="nav-demo" href="demo.html">Demo <span aria-hidden="true">↗</span></a>
+      </div>
+    </nav>
+  </header>
 
-<nav class="nav">
-  <div class="nav-in">
-    <span class="nav-brand">CART</span>
-    <a href="#motivation">Motivation</a>
-    <a href="#method">Method</a>
-    <a href="#results">Results</a>
-    <a href="#limitations">Limitations</a>
-    <a class="cta" href="demo.html">Interactive demo →</a>
-    <button class="theme-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle light or dark theme">◐</button>
-  </div>
-</nav>
+  <main class="wrap">
+    <section class="overview" id="motivation" aria-labelledby="project-title">
+      <div>
+        <p class="eyebrow">Confidence-Aware Retrieval for Audio RAG</p>
+        <h1 id="project-title">Search spoken passages beyond the transcript.</h1>
+        <p class="lead">A speech recognizer can get a whole sentence right and miss the one word you search for. CART uses the recognizer’s own uncertainty to help find the right passage.</p>
+        <a class="button" href="demo.html">Try the interactive demo <span aria-hidden="true">↗</span></a>
+      </div>
+      <figure class="example">
+        <figcaption>Example transcription error</figcaption>
+        <dl>
+          <div><dt>Spoken phrase</dt><dd>the <strong>cell</strong> membrane</dd></div>
+          <div><dt>Recognized as</dt><dd>the <mark>sail</mark> membrane</dd></div>
+          <div><dt>Search term</dt><dd><strong>cell</strong></dd></div>
+        </dl>
+        <p>Matching how words sound can surface the passage even when the transcript says “sail.”</p>
+      </figure>
+    </section>
 
-<header class="hero">
-  <div class="wrap">
-    <h1>Confidence-Aware ReTrieval<br>for Audio RAG</h1>
-    <p class="sub">Spoken-document retrieval fails on exactly the words that matter most. CART uses the recognizer's own uncertainty to find the right passage even when its key term was transcribed wrongly &mdash; with no training, no context documents, and no entity recognizer.</p>
-    <div class="byline"><strong>Khang Le</strong></div>
-    <div class="affil">Worcester Polytechnic Institute &middot; DS547 Information Retrieval</div>
-    <div class="badges">
-      <a class="badge primary" href="demo.html">▶ Interactive demo</a>
-      <a class="badge" href="https://github.com/Khangxlei/cart-audio-rag">◧ Code</a>
-      <a class="badge" href="https://github.com/Khangxlei/cart-audio-rag/blob/main/results/REPORT.md">▤ Full results</a>
-      <a class="badge" href="https://github.com/Khangxlei/cart-audio-rag/blob/main/docs/RUN_LOG.md">⎇ Run log</a>
+    <section class="project-section" id="method" aria-labelledby="method-title">
+      <div>
+        <p class="eyebrow">Method</p>
+        <h2 id="method-title">Three ways to find a passage</h2>
+      </div>
+      <dl class="method-list">
+        <div><dt>Transcript</dt><dd>Search the recognizer’s first-choice transcript for the words in the question.</dd></div>
+        <div><dt>Alternative spellings</dt><dd>For uncertain words, also search the other spellings the recognizer considered.</dd></div>
+        <div><dt>Sound-alike terms</dt><dd>When a query word is missing, look for similar pronunciations. Sound matches count more when the recognizer is less certain about the passage.</dd></div>
+      </dl>
+    </section>
+
+    <section class="project-section" id="results" aria-labelledby="results-title">
+      <div>
+        <p class="eyebrow">Results</p>
+        <h2 id="results-title">The gains grew as transcription errors increased.</h2>
+        <p class="section-copy">CART ranked answer passages higher than transcript-only search at all four noise levels. The evaluation used 4,021 questions over 1,896 spoken passages.</p>
+      </div>
+      <div>
+        <table class="results">
+          <caption>Mean reciprocal rank (MRR) rewards putting the first correct passage closer to the top.</caption>
+          <thead>
+            <tr><th scope="col">Word error rate</th><th scope="col">Transcript only</th><th scope="col">CART</th><th scope="col">Gain</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">4.2%</th><td>0.7892</td><td>0.7960</td><td>+0.0068</td></tr>
+            <tr><th scope="row">5.7%</th><td>0.7760</td><td>0.7883</td><td>+0.0123</td></tr>
+            <tr><th scope="row">10.9%</th><td>0.7521</td><td>0.7694</td><td>+0.0173</td></tr>
+            <tr><th scope="row">37.2%</th><td>0.5736</td><td>0.6046</td><td>+0.0310</td></tr>
+          </tbody>
+        </table>
+        <p class="source-link"><a href="https://github.com/Khangxlei/cart-audio-rag/blob/main/results/REPORT.md">Full experimental results <span aria-hidden="true">↗</span></a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p><strong>Khang Le</strong> · Worcester Polytechnic Institute · DS547 Information Retrieval</p>
+      <a href="https://github.com/Khangxlei/cart-audio-rag">Repository <span aria-hidden="true">↗</span></a>
     </div>
-  </div>
-</header>
-
-<div class="wrap">
-
-<div class="stats">
-  <div class="stat good"><div class="v">+0.031</div><div class="k">MRR over baseline at 37% WER</div></div>
-  <div class="stat"><div class="v">4&nbsp;→&nbsp;37%</div><div class="k">WER range tested</div></div>
-  <div class="stat"><div class="v">4,021</div><div class="k">held-out test queries</div></div>
-  <div class="stat"><div class="v">32.4&nbsp;h</div><div class="k">audio transcribed</div></div>
-  <div class="stat"><div class="v">0</div><div class="k">parameters trained</div></div>
-</div>
-
-<section id="motivation">
-  <div class="eyebrow">The problem</div>
-  <h2>Speech recognizers fail hardest on the words you search for</h2>
-
-  <p>A retrieval-augmented system over spoken archives &mdash; lectures, meetings, podcasts, call recordings &mdash; almost always works as a cascade: transcribe the audio, then run text retrieval over the transcript. The transcription step throws away everything except its single best guess, and that guess is wrong in a very particular way.</p>
-
-  <p>Recognition errors are not spread evenly across words. They concentrate on <strong>named entities, technical terms and numbers</strong>: precisely the tokens that carry the information need, and precisely the tokens users type into a search box. Common function words, which the language model can predict from context, survive almost intact.</p>
-
-  <p>We measured this directly on our collection. Named entities are <strong>17% of all tokens</strong> but consistently carry two to four times the error rate of everything else:</p>
-
-  <figure>
-    <svg class="chart" viewBox="0 0 720 280" role="img" aria-label="Bar chart: word error rate on named entities versus other words, across four audio conditions">
-      <title>Word error rate on named entities versus all other words</title>
-      <!-- gridlines -->
-      <g class="axis" stroke-width="1">
-        <line x1="46" y1="216" x2="700" y2="216"></line>
-        <line x1="46" y1="179.6" x2="700" y2="179.6" stroke-dasharray="2 4" opacity="0.5"></line>
-        <line x1="46" y1="143.3" x2="700" y2="143.3" stroke-dasharray="2 4" opacity="0.5"></line>
-        <line x1="46" y1="107" x2="700" y2="107" stroke-dasharray="2 4" opacity="0.5"></line>
-        <line x1="46" y1="70.6" x2="700" y2="70.6" stroke-dasharray="2 4" opacity="0.5"></line>
-        <line x1="46" y1="34.3" x2="700" y2="34.3" stroke-dasharray="2 4" opacity="0.5"></line>
-      </g>
-      <g font-size="11.5" text-anchor="end">
-        <text x="40" y="220">0%</text>
-        <text x="40" y="183.6">10%</text>
-        <text x="40" y="147.3">20%</text>
-        <text x="40" y="111">30%</text>
-        <text x="40" y="74.6">40%</text>
-        <text x="40" y="38.3">50%</text>
-      </g>
-      <!-- bars: NE then non-NE per condition -->
-      <g>
-        <rect x="82"    y="176"   width="46" height="40"    fill="#e4572e" rx="2"></rect>
-        <rect x="132"   y="205.8" width="46" height="10.2"  fill="#8b95a1" rx="2"></rect>
-        <rect x="245.5" y="164"   width="46" height="52"    fill="#e4572e" rx="2"></rect>
-        <rect x="295.5" y="201.5" width="46" height="14.5"  fill="#8b95a1" rx="2"></rect>
-        <rect x="409"   y="137.8" width="46" height="78.2"  fill="#e4572e" rx="2"></rect>
-        <rect x="459"   y="184.4" width="46" height="31.6"  fill="#8b95a1" rx="2"></rect>
-        <rect x="572.5" y="36.4"  width="46" height="179.6" fill="#e4572e" rx="2"></rect>
-        <rect x="622.5" y="89.8"  width="46" height="126.2" fill="#8b95a1" rx="2"></rect>
-      </g>
-      <!-- value labels -->
-      <g font-size="11.5" text-anchor="middle" class="glabel">
-        <text x="105"   y="170">11.0</text>
-        <text x="155"   y="200">2.8</text>
-        <text x="268.5" y="158">14.3</text>
-        <text x="318.5" y="195.5">4.0</text>
-        <text x="432"   y="131.8">21.5</text>
-        <text x="482"   y="178.4">8.7</text>
-        <text x="595.5" y="30.4">49.4</text>
-        <text x="645.5" y="83.8">34.7</text>
-      </g>
-      <!-- x labels -->
-      <g font-size="12.5" text-anchor="middle">
-        <text x="130" y="236">clean</text><text x="130" y="251" font-size="11" opacity="0.75">4.2% WER</text>
-        <text x="293.5" y="236">babble 5 dB</text><text x="293.5" y="251" font-size="11" opacity="0.75">5.7% WER</text>
-        <text x="457" y="236">babble 0 dB</text><text x="457" y="251" font-size="11" opacity="0.75">10.9% WER</text>
-        <text x="620.5" y="236">babble −5 dB</text><text x="620.5" y="251" font-size="11" opacity="0.75">37.2% WER</text>
-      </g>
-      <!-- legend -->
-      <g font-size="12">
-        <rect x="46" y="266" width="11" height="11" fill="#e4572e" rx="2"></rect>
-        <text x="63" y="276">named entities</text>
-        <rect x="175" y="266" width="11" height="11" fill="#8b95a1" rx="2"></rect>
-        <text x="192" y="276">all other words</text>
-      </g>
-    </svg>
-    <figcaption><strong>Errors concentrate where it hurts.</strong> Word error rate on named-entity tokens versus everything else, for <code>faster-whisper small.en</code> on Spoken-SQuAD with babble noise added at decreasing signal-to-noise ratios. Even on clean audio, entities are mistranscribed four times as often as other words.</figcaption>
-  </figure>
-
-  <p>So the cascade loses the search term and keeps the filler. Worse, it loses it <em>silently</em>: the transcript reads as fluent English, and nothing downstream can tell that <em>"the cell membrane"</em> became <em>"the sail membrane"</em>.</p>
-
-  <h3>What the recognizer knew but didn't say</h3>
-
-  <p>Here is the opening we exploit. A beam-search decoder does not actually have one guess &mdash; it has several, scored. And it attaches a probability to every word it emits. When it mistranscribes a name, two things are usually true:</p>
-
-  <ul>
-    <li>the confidence on that word <strong>drops</strong> &mdash; mean confidence is 0.95 on correct words against 0.76 on errors in clean audio, giving an <strong>AUC of 0.85</strong> for using confidence to spot an error;</li>
-    <li>the correct spelling, or something that sounds like it, is often <strong>sitting in a competing beam</strong>.</li>
-  </ul>
-
-  <p>All of that is discarded when the pipeline writes out 1-best text. CART's claim is simply that it should not be.</p>
-
-  <div class="note">
-    <p><span class="lbl">Why not just fix the transcript?</span> Choosing a different word for the index means committing to it, and a wrong commitment is worse than uncertainty. CART never overwrites the recognizer's output. It keeps the 1-best as the primary signal and adds the alternatives as <em>secondary, down-weighted evidence</em>, so a passage can be found by either spelling without the mistake being made twice.</p>
-  </div>
-</section>
-
-<section id="method">
-  <div class="eyebrow">The method</div>
-  <h2>Three channels over one recognizer pass</h2>
-
-  <p>CART is a retrieval layer, not a model. It runs once over the recognizer's output to build an index, needs no training, no external corpus and no entity recognizer, and adds nothing to the recognition pass itself.</p>
-
-  <figure>
-    <svg class="chart" viewBox="0 0 900 430" role="img" aria-label="Diagram of the CART pipeline from audio through three index channels to a ranked result">
-      <title>The CART pipeline</title>
-      <defs>
-        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
-        </marker>
-      </defs>
-      <g font-size="13" color="#8b95a1">
-
-        <!-- stage 1 -->
-        <text x="20" y="20" font-size="11.5" letter-spacing="1.2" class="eyebrow-svg" font-weight="700">1 · RECOGNISE</text>
-        <rect x="20" y="32" width="150" height="54" rx="9" class="bx bx-plain"></rect>
-        <text x="95" y="56" text-anchor="middle" class="glabel" font-size="13.5">audio segment</text>
-        <text x="95" y="73" text-anchor="middle" font-size="11.5">30 s window</text>
-
-        <line x1="95" y1="86" x2="95" y2="112" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-
-        <rect x="20" y="116" width="150" height="58" rx="9" class="bx bx-soft"></rect>
-        <text x="95" y="139" text-anchor="middle" class="glabel" font-size="13.5">Whisper</text>
-        <text x="95" y="156" text-anchor="middle" font-size="11.5">beam search, 8 beams</text>
-
-        <!-- three outputs -->
-        <line x1="170" y1="145" x2="218" y2="78"  stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-        <line x1="170" y1="145" x2="218" y2="180" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-        <line x1="170" y1="145" x2="218" y2="288" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-
-        <!-- stage 2 -->
-        <text x="225" y="20" font-size="11.5" letter-spacing="1.2" class="eyebrow-svg" font-weight="700">2 · INDEX &mdash; THREE CHANNELS</text>
-
-        <rect x="225" y="46" width="290" height="62" rx="9" class="bx bx-plain"></rect>
-        <text x="239" y="68" class="glabel" font-size="13.5">1-best transcript</text>
-        <text x="239" y="86" font-size="11.5">→ BM25 postings, weight 1</text>
-        <text x="239" y="101" font-size="11.5">→ document length comes from here only</text>
-
-        <rect x="225" y="148" width="290" height="76" rx="9" class="bx bx-acc"></rect>
-        <text x="239" y="170" class="glabel" font-size="13.5">beam alternatives, where p &lt; τ</text>
-        <text x="239" y="188" font-size="11.5">→ extra postings at the same audio position,</text>
-        <text x="239" y="203" font-size="11.5">&nbsp;&nbsp;&nbsp;weight α = 0.5</text>
-        <text x="239" y="218" font-size="11.5">→ only for words the recognizer was unsure of</text>
-
-        <rect x="225" y="256" width="290" height="76" rx="9" class="bx bx-acc"></rect>
-        <text x="239" y="278" class="glabel" font-size="13.5">phonemes of low-confidence terms</text>
-        <text x="239" y="296" font-size="11.5">→ articulatory-feature edit distance</text>
-        <text x="239" y="311" font-size="11.5">→ fires only where surface matching failed</text>
-        <text x="239" y="326" font-size="11.5">→ blocked by phoneme bigram for speed</text>
-
-        <rect x="225" y="356" width="290" height="46" rx="9" class="bx bx-dash"></rect>
-        <text x="239" y="378" class="glabel" font-size="13.5">chunk confidence c</text>
-        <text x="239" y="394" font-size="11.5">mean word probability for the segment</text>
-
-        <!-- arrows to scoring -->
-        <line x1="515" y1="77"  x2="568" y2="170" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-        <line x1="515" y1="186" x2="568" y2="192" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-        <line x1="515" y1="294" x2="568" y2="215" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-        <line x1="515" y1="379" x2="560" y2="240" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"></line>
-
-        <!-- stage 3 -->
-        <text x="575" y="20" font-size="11.5" letter-spacing="1.2" class="eyebrow-svg" font-weight="700">3 · SCORE</text>
-
-        <rect x="575" y="46" width="305" height="52" rx="9" class="bx bx-plain"></rect>
-        <text x="727" y="69" text-anchor="middle" class="glabel" font-size="13.5">query</text>
-        <text x="727" y="86" text-anchor="middle" font-size="11.5">"what is the cell membrane made of"</text>
-
-        <rect x="575" y="162" width="305" height="92" rx="9" class="bx bx-good"></rect>
-        <text x="727" y="188" text-anchor="middle" class="glabel" font-size="15" font-family="Charter, Georgia, serif">
-          s = s<tspan font-size="11" dy="3">text</tspan><tspan dy="-3"> + λ·(1−c)·s</tspan><tspan font-size="11" dy="3">phonetic</tspan>
-        </text>
-        <text x="727" y="212" text-anchor="middle" font-size="11.5">the phonetic channel is trusted in proportion</text>
-        <text x="727" y="227" text-anchor="middle" font-size="11.5">to how unsure the recognizer was</text>
-        <text x="727" y="244" text-anchor="middle" font-size="11.5" font-style="italic">λ = 2.0 (tuned on dev)</text>
-
-        <line x1="727" y1="98" x2="727" y2="158" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-        <line x1="727" y1="254" x2="727" y2="300" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-
-        <rect x="575" y="304" width="305" height="54" rx="9" class="bx bx-soft"></rect>
-        <text x="727" y="327" text-anchor="middle" class="glabel" font-size="13.5">ranked audio segments</text>
-        <text x="727" y="344" text-anchor="middle" font-size="11.5">with timestamps, ready for a reader LLM</text>
-      </g>
-    </svg>
-    <figcaption><strong>The pipeline.</strong> One recognition pass feeds three index channels. The text channel is ordinary BM25 over the 1-best. The two blue channels are what CART adds, and both are restricted to the spans the recognizer flagged as uncertain. The dashed path carries the segment's confidence into the final score, where it decides how much the phonetic channel is trusted.</figcaption>
-  </figure>
-
-  <h3>Channel 1 &mdash; alternative-spelling expansion</h3>
-
-  <p>Every word whose probability falls below a threshold <code>τ</code> gets the spellings that competing beams proposed at the same position added to the index as extra postings, carrying weight <code>α = 0.5</code>. Two details keep this honest:</p>
-
-  <ul>
-    <li><strong>Document length is computed from the 1-best alone.</strong> Expansion postings do not lengthen the document, so a passage cannot win by simply accumulating more terms &mdash; which is what BM25's length normalisation would otherwise reward.</li>
-    <li><strong>Only uncertain spans are expanded.</strong> A word the recognizer was confident about contributes nothing extra, so a correct transcript is left alone.</li>
-  </ul>
-
-  <p>Getting the alternatives out was the hardest engineering problem in the project. <code>faster-whisper</code> exposes only the 1-best; its CTranslate2 backend can return N-best hypotheses but the wrapper never asks for them, and the relevant attributes are read-only. We insert a delegating proxy around the inner model that injects <code>num_hypotheses</code> into each <code>generate</code> call and captures the full result. Because hypothesis 0 is identical to the 1-best, concatenating hypothesis <em>k</em> across the 30-second windows yields an alternative transcript that can be aligned to the primary one with <code>difflib</code>, recovering per-position competing spellings.</p>
-
-  <h3>Channel 2 &mdash; phonetic fallback</h3>
-
-  <p>Sometimes no beam contains the right word. The recognizer heard <em>something</em>, though, and what it wrote usually sounds like what was said. So we also index the <em>pronunciation</em> of low-confidence terms, letting a query term match a span that no spelling in the index matches.</p>
-
-  <p>A plain edit distance over phoneme symbols is too blunt for this. It scores <code>S EH L</code> against <code>S EY L</code> exactly as it scores <code>S EH L</code> against <code>S P L</code> &mdash; one substitution each &mdash; when the first pair is a real confusion and the second is not. We therefore weight substitutions by <strong>articulatory features</strong>: place, manner and voicing for consonants, height, backness, rounding and diphthong status for vowels. Dropping an unstressed schwa or a glide is also made cheap, because recognizers do it constantly.</p>
-
-  <div class="scroller">
-    <table>
-      <thead><tr><th>word pair</th><th>ARPAbet</th><th>plain edit distance</th><th>our feature-weighted similarity</th></tr></thead>
-      <tbody>
-        <tr><td>cell / sail</td><td><code>S EH L</code> vs <code>S EY L</code></td><td>1 substitution</td><td class="best">0.84 &nbsp;<span class="sig">(confusable)</span></td></tr>
-        <tr><td>cell / table</td><td><code>S EH L</code> vs <code>T EY B AH L</code></td><td>3 edits</td><td>0.43 &nbsp;<span class="sig">(not confusable)</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <p>The channel is deliberately a <em>fallback</em>. It is suppressed for any document whose 1-best already contains the query term, so it can only ever add matches where surface retrieval has already failed. Candidates are restricted by phoneme-bigram blocking so each query term is compared against plausible vocabulary rather than the whole index.</p>
-
-  <h3>Channel 3 &mdash; the confidence gate</h3>
-
-  <p>The two added channels are useful exactly when the transcript is unreliable, and harmful when it is not. So the final score scales the phonetic contribution by the segment's own uncertainty:</p>
-
-  <pre><code>s = s_text  +  λ · (1 − c) · s_phonetic
-
-  c  = mean word confidence for the segment
-  λ  = 2.0   how far to trust the phonetic channel at all
-  τ  = 0.8   confidence below which a word is expanded
-  α  = 0.5   posting weight for alternative spellings
-  θ  = 0.55  minimum phonetic similarity to count as a match</code></pre>
-
-  <p>A segment the recognizer is sure about has <code>c → 1</code>, which switches the phonetic channel off. A segment it struggled with gets the full benefit. All four parameters were tuned once on a development split and held fixed for every reported number.</p>
-
-  <div class="note">
-    <p><span class="lbl">See it work.</span> The <a href="demo.html">interactive demo</a> runs this scoring in your browser on real recognizer output &mdash; genuine confidences, genuine beam alternatives &mdash; so you can watch which words get expanded, which phonetic matches fire, and how the ranking changes as you move τ and λ.</p>
-  </div>
-</section>
-
-<section id="results">
-  <div class="eyebrow">Experiments</div>
-  <h2>Does it actually retrieve better?</h2>
-
-  <h3>Setup</h3>
-
-  <dl class="kv">
-    <dt>Collection</dt><dd><strong>Spoken-SQuAD</strong> test split &mdash; 1,896 spoken passages, 32.4 hours of audio, mean 122.9 words per passage</dd>
-    <dt>Queries</dt><dd>5,332 total, split by hash into 1,311 dev (tuning) and <strong>4,021 test</strong> (everything reported here)</dd>
-    <dt>Recognizer</dt><dd><code>faster-whisper small.en</code>, beam search with 8 beams, 8 hypotheses retained</dd>
-    <dt>Conditions</dt><dd>clean, plus babble noise at 5 dB, 0 dB and &minus;5 dB SNR &mdash; giving 4.2%, 5.7%, 10.9% and 37.2% WER</dd>
-    <dt>Metrics</dt><dd>Recall@<em>k</em>, MRR, nDCG@10, with 95% percentile-bootstrap confidence intervals and paired bootstrap tests against the 1-best baseline</dd>
-    <dt>Hardware</dt><dd>NVIDIA H100 and L40S GPUs on the WPI Turing cluster; every reported number comes from one consistent environment</dd>
-  </dl>
-
-  <h4>Systems compared</h4>
-  <div class="scroller">
-    <table>
-      <thead><tr><th>system</th><th style="text-align:left">what it tests</th></tr></thead>
-      <tbody>
-        <tr class="bound"><td>BM25 / reference transcript</td><td style="text-align:left">upper bound &mdash; what retrieval would score if transcription were perfect</td></tr>
-        <tr><td>BM25 / Whisper 1-best</td><td style="text-align:left">the standard cascade, and the baseline every test is run against</td></tr>
-        <tr><td>Uniform N-best fusion</td><td style="text-align:left">same beam alternatives as CART, but added <em>everywhere</em> &mdash; isolates whether targeting matters</td></tr>
-        <tr><td>Dense retrieval / 1-best</td><td style="text-align:left">a learned retriever in the comparison, standing in for SpeechRAG</td></tr>
-        <tr class="ours"><td>CART</td><td style="text-align:left">confidence-targeted expansion + phonetic fallback</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h3>Main result</h3>
-
-  <p>CART beats the standard cascade at every noise level, and <strong>the margin grows as recognition degrades</strong> &mdash; which is the behaviour the method predicts and the reason it exists.</p>
-
-  <figure>
-    <svg class="chart" viewBox="0 0 720 340" role="img" aria-label="Line chart of MRR against word error rate for five retrieval systems">
-      <title>Retrieval effectiveness against recognition error rate</title>
-      <g class="axis" stroke-width="1">
-        <line x1="52" y1="298" x2="700" y2="298"></line>
-        <line x1="52" y1="33.6"  x2="700" y2="33.6"  stroke-dasharray="2 4" opacity="0.45"></line>
-        <line x1="52" y1="77.7"  x2="700" y2="77.7"  stroke-dasharray="2 4" opacity="0.45"></line>
-        <line x1="52" y1="121.8" x2="700" y2="121.8" stroke-dasharray="2 4" opacity="0.45"></line>
-        <line x1="52" y1="165.8" x2="700" y2="165.8" stroke-dasharray="2 4" opacity="0.45"></line>
-        <line x1="52" y1="209.9" x2="700" y2="209.9" stroke-dasharray="2 4" opacity="0.45"></line>
-        <line x1="52" y1="254"   x2="700" y2="254"   stroke-dasharray="2 4" opacity="0.45"></line>
-      </g>
-      <g font-size="11.5" text-anchor="end">
-        <text x="46" y="37.6">0.80</text>
-        <text x="46" y="81.7">0.75</text>
-        <text x="46" y="125.8">0.70</text>
-        <text x="46" y="169.8">0.65</text>
-        <text x="46" y="213.9">0.60</text>
-        <text x="46" y="258">0.55</text>
-        <text x="46" y="302">0.50</text>
-      </g>
-      <text x="16" y="170" font-size="12" text-anchor="middle" transform="rotate(-90 16 170)">MRR</text>
-
-      <!-- oracle -->
-      <polyline points="52,26.5 224.7,26.5 397.3,26.5 570,26.5" fill="none" stroke="#8b95a1" stroke-width="2" stroke-dasharray="5 4"></polyline>
-      <!-- dense -->
-      <polyline points="52,123.2 224.7,125.7 397.3,147.1 570,287.3" fill="none" stroke="#b07aa1" stroke-width="2"></polyline>
-      <!-- bm25 -->
-      <polyline points="52,43.1 224.7,54.8 397.3,75.8 570,233.1" fill="none" stroke="#e4572e" stroke-width="2"></polyline>
-      <!-- nbest -->
-      <polyline points="52,37.1 224.7,43.2 397.3,64.8 570,220.5" fill="none" stroke="#f0a202" stroke-width="2"></polyline>
-      <!-- cart -->
-      <polyline points="52,37.2 224.7,43.9 397.3,60.6 570,205.8" fill="none" stroke="#1a7f4b" stroke-width="3.2"></polyline>
-
-      <g>
-        <circle cx="52" cy="26.5" r="3.2" fill="#8b95a1"></circle><circle cx="224.7" cy="26.5" r="3.2" fill="#8b95a1"></circle><circle cx="397.3" cy="26.5" r="3.2" fill="#8b95a1"></circle><circle cx="570" cy="26.5" r="3.2" fill="#8b95a1"></circle>
-        <circle cx="52" cy="123.2" r="3.2" fill="#b07aa1"></circle><circle cx="224.7" cy="125.7" r="3.2" fill="#b07aa1"></circle><circle cx="397.3" cy="147.1" r="3.2" fill="#b07aa1"></circle><circle cx="570" cy="287.3" r="3.2" fill="#b07aa1"></circle>
-        <circle cx="52" cy="43.1" r="3.2" fill="#e4572e"></circle><circle cx="224.7" cy="54.8" r="3.2" fill="#e4572e"></circle><circle cx="397.3" cy="75.8" r="3.2" fill="#e4572e"></circle><circle cx="570" cy="233.1" r="3.2" fill="#e4572e"></circle>
-        <circle cx="52" cy="37.1" r="3.2" fill="#f0a202"></circle><circle cx="224.7" cy="43.2" r="3.2" fill="#f0a202"></circle><circle cx="397.3" cy="64.8" r="3.2" fill="#f0a202"></circle><circle cx="570" cy="220.5" r="3.2" fill="#f0a202"></circle>
-        <circle cx="52" cy="37.2" r="4.3" fill="#1a7f4b"></circle><circle cx="224.7" cy="43.9" r="4.3" fill="#1a7f4b"></circle><circle cx="397.3" cy="60.6" r="4.3" fill="#1a7f4b"></circle><circle cx="570" cy="205.8" r="4.3" fill="#1a7f4b"></circle>
-      </g>
-
-      <g font-size="12" font-weight="600">
-        <text x="580" y="30" fill="#8b95a1">reference transcript</text>
-        <text x="580" y="202" fill="#1a7f4b">CART</text>
-        <text x="580" y="224" fill="#f0a202">N-best uniform</text>
-        <text x="580" y="240" fill="#e4572e">BM25 / 1-best</text>
-        <text x="580" y="291" fill="#b07aa1">dense</text>
-      </g>
-
-      <g font-size="12.5" text-anchor="middle">
-        <text x="52" y="316">4.2%</text>
-        <text x="224.7" y="316">5.7%</text>
-        <text x="397.3" y="316">10.9%</text>
-        <text x="570" y="316">37.2%</text>
-      </g>
-      <text x="311" y="334" font-size="12" text-anchor="middle">word error rate of the transcript the index was built from</text>
-    </svg>
-    <figcaption><strong>The gap widens with error rate.</strong> As transcription degrades, every system built on it falls &mdash; but CART falls more slowly. At 4.2% WER it is level with untargeted N-best fusion; by 37.2% WER it is clearly ahead of it and 0.031 MRR above the standard cascade. The reference-transcript line is flat because noise cannot affect a human transcript; it marks the ceiling retrieval could reach if recognition were solved.</figcaption>
-  </figure>
-
-  <div class="scroller">
-    <table>
-      <thead><tr>
-        <th>system</th><th>4.2% WER</th><th>5.7% WER</th><th>10.9% WER</th><th>37.2% WER</th><th>ms / query</th>
-      </tr></thead>
-      <tbody>
-        <tr class="bound"><td>BM25 / reference transcript</td><td>0.8081</td><td>0.8081</td><td>0.8081</td><td>0.8081</td><td>0.06</td></tr>
-        <tr><td>BM25 / Whisper 1-best</td><td>0.7892</td><td>0.7760</td><td>0.7521</td><td>0.5736</td><td>0.06</td></tr>
-        <tr><td>Uniform N-best fusion</td><td>0.7961*</td><td>0.7891*</td><td>0.7646*</td><td>0.5879*</td><td>0.07</td></tr>
-        <tr><td>Dense retrieval / 1-best</td><td>0.6984</td><td>0.6955</td><td>0.6712</td><td>0.5121</td><td>3.96</td></tr>
-        <tr class="ours"><td>CART</td><td>0.7960*</td><td>0.7883*</td><td class="best">0.7694*</td><td class="best">0.6046*</td><td>81.90</td></tr>
-        <tr><td colspan="6" style="text-align:left; border-bottom:none; color:var(--fg-muted); font-size:13.5px; white-space:normal; padding-top:10px">
-          MRR on 4,021 held-out test queries. <code>*</code> = significantly better than BM25 / 1-best, two-sided paired bootstrap on reciprocal rank, 5,000 resamples, <em>p</em> &lt; 0.05. Every starred difference in fact reaches <em>p</em> &lt; 2&times;10<sup>&minus;4</sup>, the resolution limit of the test. Latency is for the hardest condition.
-        </td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <p>Reading across: <strong>CART is the best non-oracle system at 10.9% and 37.2% WER.</strong> On nearly clean audio it is statistically indistinguishable from untargeted N-best fusion (0.7960 against 0.7961) &mdash; there is simply very little to repair when 96% of words are right, and the total headroom to the oracle is 0.019 MRR. The method separates where the problem it addresses actually exists.</p>
-
-  <p>Recall improves in the same direction. At 37.2% WER, Recall@1 goes 0.4942&nbsp;→&nbsp;0.5208 and Recall@10 goes 0.7364&nbsp;→&nbsp;0.7722, so CART is not merely reshuffling the top of the list &mdash; it is pulling genuinely missed passages into the candidate set.</p>
-
-  <h3>The gain lands where the motivation said it would</h3>
-
-  <p>If CART works for the reason we claim, its advantage should be larger on queries that mention a named entity, because that is where transcription fails. It is, consistently, by a factor of roughly 1.6:</p>
-
-  <div class="scroller">
-    <table>
-      <thead><tr>
-        <th>condition</th>
-        <th>NE queries (n=2,400)</th><th>CART</th><th>gain</th>
-        <th>other queries (n=1,621)</th><th>CART</th><th>gain</th>
-      </tr></thead>
-      <tbody>
-        <tr><td>clean</td><td>0.8290</td><td>0.8379</td><td class="best">+0.0089</td><td>0.7303</td><td>0.7339</td><td>+0.0036</td></tr>
-        <tr><td>babble 5 dB</td><td>0.8131</td><td>0.8275</td><td class="best">+0.0144</td><td>0.7211</td><td>0.7302</td><td>+0.0091</td></tr>
-        <tr><td>babble 0 dB</td><td>0.7841</td><td>0.8045</td><td class="best">+0.0204</td><td>0.7046</td><td>0.7175</td><td>+0.0129</td></tr>
-        <tr><td>babble &minus;5 dB</td><td>0.5941</td><td>0.6306</td><td class="best">+0.0365</td><td>0.5431</td><td>0.5662</td><td>+0.0231</td></tr>
-        <tr><td colspan="7" style="text-align:left;border-bottom:none;color:var(--fg-muted);font-size:13.5px;white-space:normal;padding-top:10px">
-          MRR, split by whether the query mentions a named entity of its gold passage. Baseline columns are BM25 / 1-best.
-        </td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h3>It costs less index than the obvious alternative</h3>
-
-  <p>Expanding only uncertain spans is cheaper than expanding everything. At the hardest condition CART adds <strong>11.6%</strong> more postings than the 1-best index, where uniform N-best fusion adds <strong>15.7%</strong> &mdash; and CART retrieves better. Targeting buys both accuracy and a smaller index.</p>
-
-  <div class="scroller">
-    <table>
-      <thead><tr><th>condition</th><th>BM25 / 1-best</th><th>N-best uniform</th><th>CART</th><th>CART overhead</th><th>phonetic terms</th></tr></thead>
-      <tbody>
-        <tr><td>clean</td><td>153,972</td><td>160,284 <span class="sig">(+4.1%)</span></td><td>157,923</td><td class="best">+2.6%</td><td>10,568</td></tr>
-        <tr><td>babble 5 dB</td><td>153,705</td><td>161,457 <span class="sig">(+5.0%)</span></td><td>159,014</td><td class="best">+3.5%</td><td>12,761</td></tr>
-        <tr><td>babble 0 dB</td><td>152,473</td><td>164,714 <span class="sig">(+8.0%)</span></td><td>161,576</td><td class="best">+6.0%</td><td>17,386</td></tr>
-        <tr><td>babble &minus;5 dB</td><td>155,185</td><td>179,486 <span class="sig">(+15.7%)</span></td><td>173,189</td><td class="best">+11.6%</td><td>20,071</td></tr>
-        <tr><td colspan="6" style="text-align:left;border-bottom:none;color:var(--fg-muted);font-size:13.5px;white-space:normal;padding-top:10px">
-          Posting-list entries. The phonetic index is a separate, smaller structure over low-confidence terms only.
-        </td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h3>Which parts carry the result</h3>
-
-  <p>We removed one component at a time, at the tuned configuration, on the same test queries. The answer is clear and it is not the one the proposal assumed.</p>
-
-  <div class="scroller">
-    <table>
-      <thead><tr><th>variant</th><th>4.2% WER</th><th>5.7% WER</th><th>10.9% WER</th><th>37.2% WER</th><th>ms / query</th></tr></thead>
-      <tbody>
-        <tr class="ours"><td>CART, full</td><td>0.7960</td><td>0.7883</td><td>0.7694</td><td>0.6046</td><td>81.2</td></tr>
-        <tr><td>− phonetic channel</td><td>0.7937</td><td>0.7854</td><td>0.7618</td><td>0.5848</td><td>0.06</td></tr>
-        <tr><td>− alternative-spelling index</td><td>0.7913</td><td>0.7794</td><td>0.7603</td><td>0.5949</td><td>81.0</td></tr>
-        <tr><td>− confidence gate <span class="sig">(drop the 1−c factor)</span></td><td>0.7511</td><td>0.7337</td><td>0.6996</td><td style="color:var(--bad);font-weight:680">0.4639</td><td>81.1</td></tr>
-        <tr><td>− confidence targeting <span class="sig">(τ = 1, expand every word)</span></td><td>0.8027</td><td>0.7979</td><td>0.7793</td><td>0.6195</td><td>92.8</td></tr>
-        <tr><td colspan="6" style="text-align:left;border-bottom:none;color:var(--fg-muted);font-size:13.5px;white-space:normal;padding-top:10px">
-          MRR. Every variant differs from full CART at <em>p</em> &lt; 2&times;10<sup>&minus;4</sup>.
-        </td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="note good">
-    <p><span class="lbl">The confidence gate is the single most important component.</span> Removing the <code>(1 − c)</code> factor costs 0.045 MRR on clean audio and <strong>0.141 at 37.2% WER</strong> &mdash; an order of magnitude more than removing either retrieval channel. Weighting the phonetic evidence by how unsure the recognizer was is what keeps it from poisoning the ranking exactly when it fires most often.</p>
-  </div>
-
-  <div class="note warn">
-    <p><span class="lbl">Confidence <em>targeting</em>, by contrast, is an efficiency mechanism &mdash; not an accuracy one.</span> Setting τ = 1 (expand every word, uncertain or not) scores <em>higher</em> than full CART in all four conditions, and the τ sweep rises monotonically to 1.0 with no interior optimum anywhere. What τ = 0.8 actually buys is latency: <strong>106.7 ms → 36.6 ms per query</strong> on clean audio, for 0.0067 MRR. That trade gets worse as noise rises (92.8 → 81.2 ms at 37% WER, for 0.0149 MRR), because half the words are already below the threshold.</p>
-    <p>So the proposal conflated two mechanisms that behave differently: <strong>scaling by confidence is essential; thresholding on confidence is a speed knob</strong> whose benefit is concentrated on clean audio. We report this as a negative result for the targeting idea, and the λ sweep below explains why the scaling matters so much.</p>
-  </div>
-
-  <p>The λ sweep also shows that the phonetic channel has to be weighted carefully rather than simply switched on. There is a genuine interior optimum that <em>moves</em> with noise &mdash; λ = 4 on clean audio, λ = 2 at 37% WER &mdash; and over-weighting is catastrophic at high error rates, where λ = 8 collapses MRR to 0.291 and λ = 16 to 0.062. A phonetic channel trusted unconditionally destroys retrieval; the same channel scaled by confidence improves it.</p>
-
-  <figure>
-    <img src="assets/fig_sensitivity.png" alt="Sensitivity curves for the lambda and tau parameters across four noise conditions">
-    <figcaption><strong>Parameter sensitivity.</strong> Left: the phonetic weight λ. Right: the expansion threshold τ. Generated by <code>scripts/07_report.py</code> from the same run as every table on this page.</figcaption>
-  </figure>
-
-  <h3>Downstream question answering</h3>
-
-  <p>Better retrieval is only interesting if it survives to the answer. We fed each system's top-3 passages to <code>Qwen2.5-1.5B-Instruct</code> and scored exact match, token-F1 and an LLM judge on 400 test questions per condition.</p>
-
-  <div class="scroller">
-    <table>
-      <thead><tr><th>system</th><th>EM</th><th>token-F1</th><th>95% CI</th><th>LLM judge</th></tr></thead>
-      <tbody>
-        <tr><td colspan="5" style="text-align:left;background:var(--bg-soft);font-weight:650;font-size:13px">clean &mdash; 4.2% WER</td></tr>
-        <tr class="bound"><td>reference transcript</td><td>0.5850</td><td>0.6632</td><td>±0.043</td><td>0.7100</td></tr>
-        <tr><td>BM25 / 1-best</td><td>0.5300</td><td>0.6296</td><td>±0.044</td><td>0.6775</td></tr>
-        <tr><td>N-best uniform</td><td>0.5275</td><td>0.6308</td><td>±0.043</td><td>0.6775</td></tr>
-        <tr class="ours"><td>CART</td><td>0.5325</td><td class="best">0.6330</td><td>±0.043</td><td class="best">0.6825</td></tr>
-        <tr><td colspan="5" style="text-align:left;background:var(--bg-soft);font-weight:650;font-size:13px">babble 0 dB &mdash; 10.9% WER</td></tr>
-        <tr class="bound"><td>reference transcript</td><td>0.5850</td><td>0.6632</td><td>±0.043</td><td>0.7100</td></tr>
-        <tr><td>BM25 / 1-best</td><td>0.4700</td><td>0.5712</td><td>±0.043</td><td>0.6125</td></tr>
-        <tr><td>N-best uniform</td><td>0.4750</td><td>0.5708</td><td>±0.044</td><td>0.6175</td></tr>
-        <tr class="ours"><td>CART</td><td>0.4800</td><td class="best">0.5785</td><td>±0.043</td><td class="best">0.6275</td></tr>
-        <tr><td colspan="5" style="text-align:left;background:var(--bg-soft);font-weight:650;font-size:13px">babble &minus;5 dB &mdash; 37.2% WER</td></tr>
-        <tr class="bound"><td>reference transcript</td><td>0.5850</td><td>0.6632</td><td>±0.043</td><td>0.7100</td></tr>
-        <tr><td>BM25 / 1-best</td><td>0.2525</td><td>0.3311</td><td>±0.042</td><td>0.3675</td></tr>
-        <tr><td>N-best uniform</td><td>0.2475</td><td>0.3286</td><td>±0.042</td><td>0.3650</td></tr>
-        <tr class="ours"><td>CART</td><td>0.2350</td><td>0.3212</td><td>±0.040</td><td>0.3575</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <p>CART is nominally ahead on both the clean and 0 dB conditions and nominally behind at &minus;5 dB, but <strong>none of these differences is statistically significant</strong>, and the honest reading is that this stage cannot resolve them. The confidence interval half-width is ±0.043 against effects of 0.003&ndash;0.010; separating those needs roughly 4,000 questions and we ran 400. This is an underpowered measurement, not evidence of no effect.</p>
-
-  <div class="note">
-    <p><span class="lbl">The more interesting number is the oracle gap.</span> At 37.2% WER, a perfect transcript takes token-F1 from 0.3311 to 0.6632 &mdash; it <em>doubles</em> answer quality. So there is enormous headroom at high error rates, but it is not reachable from the retrieval side: CART hands the reader the <em>correct</em> passage more often, and that passage is still a 37%-WER transcript. Retrieving the right garbled text does not let a reader answer from it.</p>
-    <p>That is a result about where the bottleneck sits. Below roughly 10% WER, retrieval is the limiting factor and a retrieval fix helps. At 37% WER the limiting factor has moved to the transcript itself, and no retrieval layer can recover it.</p>
-  </div>
-
-  <p>One downstream variant did produce a clear, adequately powered finding, and it is negative. <strong>Alternative-Context Generation &mdash; handing the reader the uncertainty directly</strong>, as <code>{cell|sail} membrane</code> &mdash; measurably <em>hurts</em>: &minus;0.050 token-F1 on clean audio (<em>p</em> = 0.003) and &minus;0.033 at 37.2% WER (<em>p</em> = 0.043). A 1.5B reader is confused by disjunctions more than it is helped by the extra coverage. Alternatives belong in the index, where they cost nothing but a posting, and not in the prompt.</p>
-</section>
-
-<section id="limitations">
-  <div class="eyebrow">Honest accounting</div>
-  <h2>Limitations</h2>
-
-  <ul>
-    <li><strong>Latency is the real cost.</strong> 81.9 ms per query against 0.06 ms for BM25 &mdash; over a thousand times slower, and essentially all of it is the phonetic channel (removing it returns latency to 0.06 ms). 82 ms is acceptable for interactive search, but CART is not free, and the phonetic channel buys only 0.0198 MRR at 37% WER for that price. A production system would want the blocking made tighter or the channel reserved for queries that return weak text matches.</li>
-    <li><strong>Confidence targeting does not improve accuracy.</strong> Stated plainly because it was the proposal's central claim: expanding every word beats targeting in all four conditions. τ remains justified as a latency control, not as an accuracy mechanism.</li>
-    <li><strong>The QA evaluation is underpowered</strong> at 400 questions per condition, as the intervals above show. It should be rerun on the full 4,021-query test split before any claim is made about downstream effect in either direction.</li>
-    <li><strong>The dense baseline is untuned.</strong> It is an off-the-shelf <code>all-MiniLM-L6-v2</code> with no domain adaptation, and it is the weakest system everywhere. That says something about untuned dense retrieval on this collection, not about learned retrieval in general.</li>
-    <li><strong>SpeechRAG is substituted, not reproduced.</strong> Its trained speech encoder was never publicly released, so a dense retriever over the 1-best stands in for it, preserving the property that made the comparison informative &mdash; a learned retriever in the mix. We report this as a substitution.</li>
-    <li><strong>One recognizer, one language, one noise type.</strong> Everything here is <code>small.en</code> with additive babble on read English speech. Larger recognizers have better confidence calibration and fewer entity errors, which would shrink the headroom CART exploits.</li>
-    <li><strong>Passage-level retrieval.</strong> Segments are whole Spoken-SQuAD passages, averaging 122.9 words. Finer-grained retrieval would change both the confidence statistics and the index cost.</li>
-  </ul>
-</section>
-
-<section id="repro">
-  <div class="eyebrow">Reproducibility</div>
-  <h2>Everything here is re-runnable</h2>
-
-  <p>All numbers on this page come from a single pipeline run on the WPI Turing cluster, recorded with job IDs, failures and fixes in the run log. No reported figure comes from a development machine.</p>
-
-  <pre><code>git clone https://github.com/Khangxlei/cart-audio-rag.git
-cd cart-audio-rag
-pip install -r requirements.txt
-python scripts/validate_env.py          # 10 pre-flight checks, ~30 s
-
-python scripts/01_prepare_data.py       # build the collection
-python scripts/02_run_asr.py --condition clean      # transcribe (GPU)
-python scripts/03_tune_cart.py          # tune on dev
-python scripts/04_eval_retrieval.py     # the main experiment
-python scripts/06_ablations.py          # component ablations
-python scripts/05_eval_qa.py --judge    # downstream QA
-python scripts/07_report.py             # regenerate REPORT.md and figures</code></pre>
-
-  <div class="badges" style="justify-content:flex-start;margin-top:22px">
-    <a class="badge" href="https://github.com/Khangxlei/cart-audio-rag">◧ Repository</a>
-    <a class="badge" href="https://github.com/Khangxlei/cart-audio-rag/blob/main/results/REPORT.md">▤ Generated report</a>
-    <a class="badge" href="https://github.com/Khangxlei/cart-audio-rag/blob/main/docs/RUN_LOG.md">⎇ Run log &amp; provenance</a>
-    <a class="badge primary" href="demo.html">▶ Interactive demo</a>
-  </div>
-</section>
-
-<footer>
-  <p><strong>CART: Confidence-Aware ReTrieval for Audio RAG</strong><br>
-  Khang Le &middot; DS547 Information Retrieval &middot; Worcester Polytechnic Institute &middot; 2026</p>
-  <p>Collection: <a href="https://huggingface.co/datasets/AudioLLMs/spoken_squad_test">Spoken-SQuAD</a>, derived from SQuAD v1.1. Recognizer: <a href="https://github.com/SYSTRAN/faster-whisper">faster-whisper</a>. Reader: <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct">Qwen2.5-1.5B-Instruct</a>.</p>
-</footer>
-
-</div>
-
-<script>
-(function () {
-  var btn = document.getElementById('themeBtn');
-  var root = document.documentElement;
-  try {
-    var saved = localStorage.getItem('cart-theme');
-    if (saved) root.setAttribute('data-theme', saved);
-  } catch (e) {}
-  btn.addEventListener('click', function () {
-    var cur = root.getAttribute('data-theme');
-    if (!cur) {
-      cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    var next = cur === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
-    try { localStorage.setItem('cart-theme', next); } catch (e) {}
-  });
-})();
-</script>
-
+  </footer>
 </body>
 </html>
