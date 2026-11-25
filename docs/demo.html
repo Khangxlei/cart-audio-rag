@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CART — Interactive Demo</title>
+<meta name="description" content="Walk through the CART retrieval pipeline on real speech-recognition output: confidence, beam alternatives, phonetic matching and live re-ranking.">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="demo.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>🔎</text></svg>">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <span class="nav-brand">CART</span>
+    <a href="index.html">← Project page</a>
+    <a href="index.html#method">Method</a>
+    <a href="index.html#results">Results</a>
+    <a class="cta" href="https://github.com/Khangxlei/cart-audio-rag">Code</a>
+    <button class="theme-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle light or dark theme">◐</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="demo-hero">
+    <h1>Watch CART work</h1>
+    <p class="lede">Every number on this page is computed in your browser, right now, from <strong>real <code>faster-whisper</code> output</strong> — genuine per-word confidences and genuine beam alternatives. Nothing is pre-recorded. Pick a question and follow the five steps.</p>
+    <div id="provenance" class="prov"></div>
+  </header>
+
+  <div id="loading" class="loading">Loading recognizer output…</div>
+  <div id="loadfail" class="note warn" hidden>
+    <p><span class="lbl">Could not load <code>demo_data.json</code>.</span> If you opened this file directly from disk, the browser blocks the fetch. Serve the folder over HTTP instead — <code>python -m http.server</code> in <code>docs/</code> — or view the hosted copy.</p>
+  </div>
+
+  <main id="app" hidden>
+
+    <!-- ===================== STEP 1 ===================== -->
+    <section class="step">
+      <div class="step-head"><span class="num">1</span>
+        <div>
+          <h2>Pick a question the transcript gets wrong</h2>
+          <p class="sub">Each of these is a real Spoken-SQuAD question. They were selected by one rule, applied before seeing any result: a word the question shares with its answer passage is <strong>missing from that passage's transcript</strong>. Surface search has already failed — this is the situation CART is built for.</p>
+        </div>
+      </div>
+      <div id="queryChips" class="chips"></div>
+      <div id="queryCard" class="qcard"></div>
+    </section>
+
+    <!-- ===================== STEP 2 ===================== -->
+    <section class="step">
+      <div class="step-head"><span class="num">2</span>
+        <div>
+          <h2>See what the recognizer actually produced</h2>
+          <p class="sub">The transcript for the answer passage, shaded by the recognizer's own per-word confidence. <strong>Click any word</strong> to inspect it. Words below the threshold τ are outlined — those are the only ones CART touches.</p>
+        </div>
+      </div>
+      <div class="legendrow">
+        <span class="lg"><i class="sw c-hi"></i>confident (p ≥ 0.9)</span>
+        <span class="lg"><i class="sw c-md"></i>uncertain (0.8 ≤ p &lt; 0.9)</span>
+        <span class="lg"><i class="sw c-lo"></i>below τ (p &lt; τ)</span>
+        <span class="lg"><i class="sw c-alt"></i>below τ <em>and</em> has beam alternatives</span>
+        <span class="lg"><i class="sw c-miss"></i>a query term the transcript lost</span>
+      </div>
+      <div id="transcript" class="transcript"></div>
+      <div id="wordInfo" class="wordinfo">Click a word above to see its confidence and the spellings competing beams proposed.</div>
+      <details class="goldbox">
+        <summary>Show the human reference transcript</summary>
+        <p id="goldText" class="goldtext"></p>
+      </details>
+    </section>
+
+    <!-- ===================== STEP 3 ===================== -->
+    <section class="step">
+      <div class="step-head"><span class="num">3</span>
+        <div>
+          <h2>Follow the three channels</h2>
+          <p class="sub">How each query term finds the answer passage — or fails to. The phonetic channel is a <em>fallback</em>: it is switched off for any passage whose transcript already contains the term, so it can only ever add matches where ordinary matching missed.</p>
+        </div>
+      </div>
+      <div id="channels" class="channels"></div>
+    </section>
+
+    <!-- ===================== STEP 4 ===================== -->
+    <section class="step">
+      <div class="step-head"><span class="num">4</span>
+        <div>
+          <h2>Compare the rankings</h2>
+          <p class="sub">The same query against three systems over the same passages. The answer passage is highlighted. Move the knobs and watch the ranking change.</p>
+        </div>
+      </div>
+
+      <div class="knobs">
+        <div class="knob">
+          <label for="tau">τ &mdash; expand words below this confidence <output id="tauOut">0.80</output></label>
+          <input type="range" id="tau" min="0" max="1" step="0.05" value="0.8">
+          <span class="hint">0 = expand nothing (plain BM25) &middot; 1 = expand every word</span>
+        </div>
+        <div class="knob">
+          <label for="lam">λ &mdash; how far to trust the phonetic channel <output id="lamOut">2.0</output></label>
+          <input type="range" id="lam" min="0" max="16" step="0.25" value="2">
+          <span class="hint">0 switches it off &middot; above ~8 it overwhelms the text score</span>
+        </div>
+        <div class="knob">
+          <label for="theta">θ &mdash; minimum phonetic similarity to count <output id="thetaOut">0.55</output></label>
+          <input type="range" id="theta" min="0.3" max="0.95" step="0.05" value="0.55">
+          <span class="hint">lower = more, looser phonetic matches</span>
+        </div>
+        <div class="knob">
+          <label for="alpha">α &mdash; posting weight for alternative spellings <output id="alphaOut">0.50</output></label>
+          <input type="range" id="alpha" min="0" max="1" step="0.05" value="0.5">
+          <span class="hint">how much an alternative counts against a 1-best word</span>
+        </div>
+        <div class="knobrow">
+          <label class="chk"><input type="checkbox" id="gate" checked> confidence gate <code>(1 − c)</code></label>
+          <button id="reset" class="minibtn">reset to tuned values</button>
+        </div>
+      </div>
+
+      <div id="ranks" class="ranks"></div>
+      <div id="rankNote" class="note" hidden></div>
+    </section>
+
+    <!-- ===================== STEP 5 ===================== -->
+    <section class="step">
+      <div class="step-head"><span class="num">5</span>
+        <div>
+          <h2>Why feature-weighted phonetics</h2>
+          <p class="sub">A plain edit distance over phoneme symbols counts <code>S EH L</code> → <code>S EY L</code> (cell/sail, a real confusion) exactly like <code>S EH L</code> → <code>S P L</code> (not one). CART weights each substitution by articulatory features. Type any two words that appear in this sample.</p>
+        </div>
+      </div>
+      <div class="playground">
+        <div class="pgrow">
+          <input type="text" id="wordA" value="cell" spellcheck="false" aria-label="first word">
+          <span class="vs">vs</span>
+          <input type="text" id="wordB" value="sail" spellcheck="false" aria-label="second word">
+        </div>
+        <div id="pgOut" class="pgout"></div>
+        <div class="pgpairs">
+          try: <button class="pill" data-a="cell" data-b="sail">cell / sail</button>
+          <button class="pill" data-a="cell" data-b="table">cell / table</button>
+          <button class="pill" data-a="trade" data-b="trait">trade / trait</button>
+          <button class="pill" data-a="port" data-b="court">port / court</button>
+          <button class="pill" data-a="major" data-b="measure">major / measure</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="step">
+      <div class="step-head"><span class="num">i</span>
+        <div>
+          <h2>What this demo does and does not show</h2>
+        </div>
+      </div>
+      <ul class="caveats">
+        <li><strong>The scoring is real.</strong> <a href="cart.js">cart.js</a> is a direct port of <code>cart/index.py</code>, <code>cart/retrieval.py</code> and <code>cart/phonetics.py</code> — the same BM25 with weighted expansion postings, the same articulatory-feature edit distance, the same <code>s = s_text + λ(1−c)·s_phonetic</code>.</li>
+        <li><strong>The collection is much smaller.</strong> This sample holds a few dozen passages against 1,896 in the experiment. IDF depends on collection size, so <em>ranks and scores here will not match the reported tables.</em> It is a mechanism viewer, not a reproduction.</li>
+        <li><strong>Pronunciations are precomputed.</strong> Grapheme-to-phoneme conversion needs a model that cannot run in a static page, so phonemes are shipped for this sample's vocabulary. Words outside it have no pronunciation here and are reported as such.</li>
+        <li><strong>Questions were chosen by a stated rule</strong> — a shared term missing from the transcript — not by whether CART happens to win. On some of them CART does not help, and you can see that.</li>
+      </ul>
+      <p class="closing">For the measured results, with confidence intervals and significance tests, see the <a href="index.html#results">project page</a> or the <a href="https://github.com/Khangxlei/cart-audio-rag/blob/main/results/REPORT.md">generated report</a>.</p>
+    </section>
+
+  </main>
+
+  <footer>
+    <p><strong>CART: Confidence-Aware ReTrieval for Audio RAG</strong> &middot; Khang Le &middot; DS547, Worcester Polytechnic Institute</p>
+    <p><a href="index.html">Project page</a> &middot; <a href="https://github.com/Khangxlei/cart-audio-rag">Repository</a></p>
+  </footer>
+
+</div>
+
+<script src="cart.js"></script>
+<script src="demo.js"></script>
+<script>
+(function () {
+  var btn = document.getElementById('themeBtn'), root = document.documentElement;
+  try { var s = localStorage.getItem('cart-theme'); if (s) root.setAttribute('data-theme', s); } catch (e) {}
+  btn.addEventListener('click', function () {
+    var cur = root.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('cart-theme', next); } catch (e) {}
+  });
+})();
+</script>
+
+</body>
+</html>
