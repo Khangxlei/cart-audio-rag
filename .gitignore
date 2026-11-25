@@ -19,6 +19,3 @@ results/_smoke.json
 
 # Site build scratch
 docs/demo_data.json.tmp
-
-# local preview helper
-.claude/
