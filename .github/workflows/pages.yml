@@ -1,14 +1,21 @@
 # Publish docs/ to GitHub Pages as a plain static site.
 #
-# The legacy Pages builder runs Jekyll over the folder and was failing with an
-# unexplained "Page build failed". Nothing here needs Jekyll -- the site is
-# hand-written HTML, CSS and JS -- so this uploads docs/ verbatim instead, which
-# is both deterministic and gives readable logs when something breaks.
+# A fallback for when the legacy Jekyll builder misbehaves. Nothing in docs/
+# needs Jekyll -- it is hand-written HTML, CSS and JS -- so this uploads the
+# folder verbatim, which is deterministic and gives readable logs.
+#
+# On 2026-11-25 the legacy builder failed repeatedly with an unexplained
+# "Page build failed" and a workflow deploy failed with HTTP 500. GitHub was in
+# a critical incident with Pages and Actions degraded, so neither failure was
+# caused by anything in this repository.
 name: Deploy project page
 
+# Manual only. The repository is currently on the legacy Pages builder, and a
+# workflow deploy only succeeds once the Pages source is switched to GitHub
+# Actions (Settings -> Pages -> Build and deployment -> Source: GitHub Actions).
+# Triggering on every push before that switch would just add a failed run to
+# each commit.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
